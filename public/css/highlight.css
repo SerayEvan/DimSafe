@@ -1,0 +1,24 @@
+/* SPDX-License-Identifier: Apache-2.0
+   Copyright 2025 Evan SERAY */
+
+.literal_numerical {
+    color: #9494d2;
+}
+.literal_keyword {
+    color: #7f56d6;
+}
+.literal_string {
+    color: #5ecacd;
+}
+.literal_unit {
+    color: #4646be;
+}
+.identifier {
+    color: #e7c85a;
+}
+.operator {
+    color: #ffffff;
+}
+.structural {
+    color: #cbcbcb;
+}

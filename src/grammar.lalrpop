@@ -1,0 +1,161 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2025 Evan SERAY
+
+grammar;
+
+use crate::lexer::*;
+
+use crate::ast::*;
+use crate::ast::location::*;
+use crate::ast::ast_node::*;
+
+use crate::scope::*;
+use crate::scope::operator::*;
+use crate::scope::value::*;
+
+extern {
+  type Location = usize;
+  type Error = LexicalError;
+
+  enum Token {
+    "literal_numerical" => Token::LiteralNumerical(<LiteralValue>),
+    "literal_keyword" => Token::LiteralKeyword(<LiteralValue>),
+    "literal_string" => Token::LiteralString(<LiteralValue>),
+    "literal_unit" => Token::LiteralUnit(<LiteralValue>),
+
+    "identifier" => Token::Identifier(<String>),
+
+    "(" => Token::StructuralToken(StructuralToken::LParenthesis),
+    ")" => Token::StructuralToken(StructuralToken::RParenthesis),
+    "[" => Token::StructuralToken(StructuralToken::LBracket),
+    "]" => Token::StructuralToken(StructuralToken::RBracket),
+    "{" => Token::StructuralToken(StructuralToken::LBrace),
+    "}" => Token::StructuralToken(StructuralToken::RBrace),
+    "$" => Token::StructuralToken(StructuralToken::Dollar),
+    "->" => Token::StructuralToken(StructuralToken::Arraow),
+    "," => Token::StructuralToken(StructuralToken::Comma),
+    ";" => Token::StructuralToken(StructuralToken::Semicolon),
+    "." => Token::StructuralToken(StructuralToken::Dot),
+
+    "+" => Token::AdditiveOperator(<Operator>),
+    "-" => Token::SubtractiveOperator(<Operator>),
+    "vector_op" => Token::VectorMultiplicativeOperator(<Operator>),
+    "boolean_op" => Token::BooleanOperator(<Operator>),
+    "multiplicative_op" => Token::MultiplicativeOperator(<Operator>),
+    "comp_op" => Token::ComparatorOperator(<Operator>),
+    "power_op" => Token::PowerOperator(<Operator>),
+    "assign_op" => Token::AssignmentOperator(<AssignmentOperator>),
+    "array_constructor" => Token::ArrayConstructor(<Operator>),
+  }
+}
+
+Leaf<T>: Leaf<T> = {
+    <t:T> => Leaf::from(t),
+};
+
+Locate<T>: Spanned<T> = {
+    <l:@L> <t:T> <r:@R> => Spanned::new(RangeIndex::new(l, r), t),
+};
+
+Literal: LiteralValue = {
+  <v:"literal_numerical"> => v,
+  <v:"literal_keyword"> => v,
+  <v:"literal_string"> => v,
+  <v:"literal_unit"> => v,
+};
+
+Identifier: Leaf<Identifier> = {
+    <mut v:(<"identifier"> ".")*> <e:"identifier"> => { v.push(e); Leaf::from(Identifier{text: v}) },
+};
+
+ArrayLevel0: Vec<Spanned<Expression>> = {
+  <e:Locate<Expression>> <mut v: ("," <Locate<Expression>>)*> ","? => {v.insert(0, e); v},
+};
+
+ArrayLevel1: Vec<Spanned<Vec<Spanned<Expression>>>> = {
+  <e:Locate<ArrayLevel0>> <mut v: (";" <Locate<ArrayLevel0>>)*> ";"? => {v.insert(0, e); v},
+};
+
+Array: Expression = {
+  <op: Locate<Leaf<"array_constructor">>> <arr: Locate<ArrayLevel1?>> "]" => Expression::Array{array: arr.map(|arr| arr.unwrap_or(vec![])), constructor: op},
+};
+
+Value: Expression = {
+  <id: Locate<Identifier>> => Expression::Identifier(id),
+  <lit: Locate<Literal>> => Expression::Literal(lit),
+  <arr: Array> => arr,
+  "(" <e: Expression> ")" => e,
+};
+
+Expression: Expression = {
+
+  #[precedence(level="1")]
+  <Value>,
+
+  #[precedence(level="2")] #[assoc(side="left")]
+  <l: Locate<Expression>> <op: Locate<Leaf<"power_op">>> <r: Locate<Expression>> => Expression::Operation{
+    operator: op,
+    arguments: vec![l,r],
+  },
+
+  #[precedence(level="3")] #[assoc(side="right")]
+  <l: Locate<Expression>> <loc: Locate<()>> <r: Locate<Expression>> => Expression::Operation{
+    operator: loc.map(|_| Leaf::from(Operator::Juxtaposition)),
+    arguments: vec![l,r],
+  },
+  
+  #[precedence(level="4")] #[assoc(side="left")]
+  <l: Locate<Expression>> <op: Locate<Leaf<"multiplicative_op">>> <r: Locate<Expression>> => Expression::Operation{
+    operator: op,
+    arguments: vec![l,r],
+  },
+
+  #[precedence(level="5")] #[assoc(side="left")]
+  <l: Locate<Expression>> <op: Locate<Leaf<"vector_op">>> <r: Locate<Expression>> => Expression::Operation{
+    operator: op,
+    arguments: vec![l,r],
+  },
+
+  #[precedence(level="6")]
+  <op: Locate<Leaf<"-">>> <r: Locate<Expression>> => Expression::Operation{
+    operator: op,
+    arguments: vec![r],
+  },
+
+  #[precedence(level="7")] #[assoc(side="left")]
+  <l: Locate<Expression>> <op: Locate<Leaf<"+">>> <r: Locate<Expression>> => Expression::Operation{
+    operator: op,
+    arguments: vec![l,r],
+  },
+  <l: Locate<Expression>> <op: Locate<Leaf<"-">>> <r: Locate<Expression>> => Expression::Operation{
+    operator: op,
+    arguments: vec![l,r],
+  },
+
+  #[precedence(level="8")] #[assoc(side="left")]
+  <l: Locate<Expression>> <op: Locate<Leaf<"comp_op">>> <r: Locate<Expression>> => Expression::Operation{
+    operator: op,
+    arguments: vec![l,r],
+  },
+
+  #[precedence(level="9")] #[assoc(side="left")]
+  <l: Locate<Expression>> <op: Locate<Leaf<"boolean_op">>> <r: Locate<Expression>> => Expression::Operation{
+    operator: op,
+    arguments: vec![l,r],
+  },
+
+  #[precedence(level="10")] #[assoc(side="left")]
+  <l: Locate<Identifier>> <op: Locate<Leaf<"assign_op">>> <r: Locate<Expression>> => Expression::Assignment{
+    identifier: l,
+    assignment_operator: op,
+    value: Box::new(r),
+  },
+};
+
+Arguments: Vec<Spanned<Expression>> = {
+  <mut args: (<Locate<Expression>> ",")*> <e:Locate<Expression>?> => {if let Some(e) = e {args.push(e);} args},
+};
+
+pub Program: Vec<Spanned<Expression>> = {
+  <mut expr: (<Locate<Expression>> ";")*> <e:Locate<Expression>?> => {if let Some(e) = e {expr.push(e);} expr},
+};

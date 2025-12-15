@@ -1,0 +1,13 @@
+/* SPDX-License-Identifier: Apache-2.0
+   Copyright 2025 Evan SERAY */
+
+body {
+    margin: 0;
+    padding: 2em;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    background: rgb(10, 10, 12);
+    color: white;
+    height: 100%;
+    font-family: monospace;
+}

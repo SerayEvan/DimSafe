@@ -1,0 +1,103 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2025 Evan SERAY
+
+use lalrpop_util::lalrpop_mod;
+use log::info;
+
+use crate::ast::*;
+use crate::ast::location::*;
+use crate::ast::ast_node::*;
+use crate::lexer::*;
+
+lalrpop_mod!(grammar);
+
+fn get_lines_pos(input: &str) -> Vec<usize> {
+    let mut lines_index = vec![0];
+    for (i, c) in input.chars().enumerate() {
+        if c == '\n' {
+            lines_index.push(i + 1);
+        }
+    }
+    lines_index
+}
+
+pub fn parse_program(input: &str) -> Result<Vec<Spanned<Expression>>, String> {
+
+    info!("Parsing program: {}", input);
+
+    // get lines index
+    let lines_pos = get_lines_pos(input);
+
+    info!("Lines positions: {:?}", lines_pos);
+
+    // lexer
+    let lexer = Lexer::new(input);
+    let tokens = lexer.collect::<Vec<_>>();
+
+    // show tokens
+    info!("{:?}", tokens);
+
+    // parse program
+    let program = grammar::ProgramParser::new().parse(tokens);
+
+    // reverse location
+    let mut program = program.map_err(|e| format!("{:?}", e))?;
+    program.rev_location(0, &lines_pos);
+    Ok(program)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use crate::scope::operator::*;
+
+    #[test]
+    fn test_get_lines_pos() {
+        let lines_pos = get_lines_pos("1+2*3 .m");
+        assert_eq!(lines_pos, vec![0]);
+
+        let lines_pos = get_lines_pos("1+2*3 .m\n4+5*6 .kg");
+        assert_eq!(lines_pos, vec![0, 9]);
+    }
+
+    #[test]
+    fn test_parser() {
+        let program = parse_program("(1 .m + 2)*3 .kg").unwrap();
+        assert_eq!(program.len(), 1);
+        
+        let expected = 
+        Spanned::new(RangeIndex::new(0, 16), Expression::Operation{
+                operator: Spanned::new(RangeIndex::new(10, 11), Leaf::from(Operator::ArithmeticMul)),
+                arguments: vec![
+                    Spanned::new(RangeIndex::new(0, 10), Expression::Operation{
+                        operator: Spanned::new(RangeIndex::new(6, 7), Leaf::from(Operator::ArithmeticAdd)),
+                        arguments: vec![
+                            Spanned::new(RangeIndex::new(1, 5), Expression::Operation{
+                                operator: Spanned::new(RangeIndex::new(3, 3), Leaf::from(Operator::Juxtaposition)),
+                                arguments: vec![
+                                    Spanned::new(RangeIndex::new(1, 2), Expression::Literal(Spanned::new(RangeIndex::new(1, 2), LiteralValue::Integer(1)))),
+                                    Spanned::new(RangeIndex::new(3, 5), Expression::Literal(Spanned::new(RangeIndex::new(3, 5), LiteralValue::Unit("m".to_string(), 1.0)))),
+                                ],
+                            }),
+                            Spanned::new(RangeIndex::new(8, 9), Expression::Literal(Spanned::new(RangeIndex::new(8, 9), LiteralValue::Integer(2)))),
+                        ],
+                    }),
+                    Spanned::new(RangeIndex::new(11, 16), Expression::Operation{
+                        operator: Spanned::new(RangeIndex::new(13, 13), Leaf::from(Operator::Juxtaposition)),
+                        arguments: vec![
+                            Spanned::new(RangeIndex::new(11, 12), Expression::Literal(Spanned::new(RangeIndex::new(11, 12), LiteralValue::Integer(3)))),
+                            Spanned::new(RangeIndex::new(13, 16), Expression::Literal(Spanned::new(RangeIndex::new(13, 16), LiteralValue::Unit("kg".to_string(), 1.0)))),
+                        ],
+                    }),
+                ],
+            });
+        let difference = Spanned::difference("", &program[0], &expected);
+
+        for diff in &difference {
+            println!("{}", diff);
+        }
+        
+        assert!(difference.is_empty());
+    }
+}
