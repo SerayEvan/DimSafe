@@ -3,6 +3,7 @@
 High-level overview of DimSafe, a Rust-based dimensioning calculator software with parsing and AST support.
 
 ## Table of Contents
+
 - About
 - Features
 - Getting Started
@@ -14,39 +15,50 @@ High-level overview of DimSafe, a Rust-based dimensioning calculator software wi
 - License
 
 ## About
+
 Briefly describe the goal of DimSafe and the problems it solves. Mention the core technologies (Rust, parser/AST design, storage layer).
 
 ## Features
+
 - Core arithmetic and expression parsing
 - AST evaluation with location tracking
 - Storage layer for persisted values
 - Add or remove bullet points as features land
 
 ## Build and Run
+
 This project is a web application using Leptos in a WASM environment, so you need to build it for the web and run it in a web browser.
 
 ### Prerequisites
+
 So first, you need to have cargo with wasm-pack and trunk installed.
 
 ### Build
+
 And then you have two options:
+
 1. Build with trunk for development:
+
 ```bash
 cargo trunk serve
 ```
 
 2. Build with wasm-pack for production:
+
 ```bash
 cargo build --target wasm32-unknown-unknown
 ```
+
 But after that, you need to run a simple HTTP server to serve the files.
 You can use vs code extension "Live Server" to serve the files.
 
 ### Run
+
 for trunk, the server will be available at http://localhost:8080
 for wasm-pack, the server will be on TODO
 
 ## Project Structure
+
 - `src/lib.rs`: crate entry
 - `src/parser.rs`: expression parsing
 - `src/ast/`: AST nodes and location utilities
@@ -55,15 +67,19 @@ for wasm-pack, the server will be on TODO
 - Update this section as files change
 
 ## Roadmap
+
 - Outline upcoming milestones and planned improvements.
 
 ## Contributing
+
 State contribution guidelines, coding style, and how to open issues/PRs.
 
 ## License
+
 Licensed under the Apache License, Version 2.0. See the `LICENSE` file for full terms.
 
 ### Apache 2.0 License Notice
+
 ```
 Copyright 2025 Evan SERAY
 

@@ -3,7 +3,6 @@
 
 use std::fmt::Debug;
 
-use crate::stylization::Stylization;
 use crate::ast::*;
 use crate::ast::location::*;
 use crate::ast::ast_node::*;
@@ -11,39 +10,37 @@ use crate::scope::*;
 use crate::scope::operator::*;
 
 trait Shownable {
-    fn display(&self, text: &mut String, style: &mut Stylization, indent: &str, return_to_line: bool);
+    fn display(&self, text: &mut String, indent: &str, return_to_line: bool);
 }
 
 macro_rules! impl_shownable_case {
 
     (
         $name:ident :: $variant:ident, 
-        $text:ident, $style:ident, $indent:ident, $return_to_line:ident
-    ) => {
-        $text.push_str("\n");
-    };
+        $text:ident, $indent:ident, $return_to_line:ident
+    ) => {};
 
     (
         $name:ident :: $variant:ident { $( $field:ident ),* }, 
-        $text:ident, $style:ident, $indent:ident, $return_to_line:ident
+        $text:ident, $indent:ident, $return_to_line:ident
     ) => {
         $(
             $text.push_str("\n");
             $text.push_str($indent);
             $text.push_str(concat!(" - ", stringify!($field), ": "));
-            $field.display($text, $style, &($indent.to_string() + "    "), true);
+            $field.display($text, &($indent.to_string() + "    "), false);
         )*
     };
 
     (
         $name:ident :: $variant:ident ( $( $tuple_fields:ident ),* ), 
-        $text:ident, $style:ident, $indent:ident, $return_to_line:ident
+        $text:ident, $indent:ident, $return_to_line:ident
     ) => {
         $(
             $text.push_str("\n");
             $text.push_str($indent);
-            $text.push_str(concat!(" - ", stringify!($tuple_fields), ": "));
-            $tuple_fields.display($text, $style, &($indent.to_string() + "    "), true);
+            $text.push_str(" - ");
+            $tuple_fields.display($text, &($indent.to_string() + "    "), false);
         )*
     };
 }
@@ -56,7 +53,7 @@ macro_rules! impl_shownable_enum {
         }
     ) => {
         impl Shownable for $name {
-            fn display(&self, text: &mut String, style: &mut Stylization, indent: &str, return_to_line: bool) {
+            fn display(&self, text: &mut String, indent: &str, return_to_line: bool) {
                 match self {
                     $(
                         $name::$variant $( ( $( $tuple_fields ),* ) )? $( { $( $struct_fields ),* } )? => {
@@ -68,7 +65,7 @@ macro_rules! impl_shownable_enum {
 
                             impl_shownable_case!(
                                 $name::$variant $( ( $( $tuple_fields ),* ) )? $( { $( $struct_fields ),* } )?, 
-                                text, style, indent, return_to_line
+                                text, indent, return_to_line
                             );
                         }
                     ),*
@@ -83,7 +80,7 @@ macro_rules! impl_shownable_with_debug {
         $name:ident
     ) => {
         impl Shownable for $name {
-            fn display(&self, text: &mut String, _style: &mut Stylization, _indent: &str, _return_to_line: bool) {
+            fn display(&self, text: &mut String, _indent: &str, _return_to_line: bool) {
                 text.push_str(&format!("{:?}", self));
             }
         }
@@ -91,51 +88,42 @@ macro_rules! impl_shownable_with_debug {
 }
 
 impl<T: Shownable> Shownable for Vec<T> {
-    fn display(&self, text: &mut String, style: &mut Stylization, indent: &str, return_to_line: bool) {
-       // let len_index = (self.len()-1).to_string().len();
-        //let new_indent = indent.to_string() + " ".repeat(len_index+3).as_str();
+    fn display(&self, text: &mut String, indent: &str, return_to_line: bool) {
         for (index,item) in self.iter().enumerate() {
             let str_index = index.to_string();
-            if index != 0 || return_to_line {
+            if index != 0 || return_to_line || true {
                 text.push_str("\n");
                 text.push_str(&indent);
             }
             text.push_str(format!("[{}] ", str_index).as_str());
-            item.display(text, style, indent, false);
+            item.display(text, &(indent.to_string() + "  "), false);
         }
     }
 }
 
 impl<T: Shownable> Shownable for Option<T> {
-    fn display(&self, text: &mut String, style: &mut Stylization, ident: &str, return_to_line: bool) {
+    fn display(&self, text: &mut String, ident: &str, return_to_line: bool) {
         match self {
-            Some(item) => item.display(text, style, ident, return_to_line),
+            Some(item) => item.display(text, ident, return_to_line),
             None => text.push_str("None"),
         }
     }
 }
 
 impl<T: Shownable + Clone + AstNode> Shownable for Spanned<T> {
-    fn display(&self,text: &mut String,style: &mut Stylization, ident: &str, return_to_line: bool) {
-        //let new_ident = ident.to_string() + "    ";
-        /*self.value.display(text, style, deep_level);
-        // Compute length since last '\n'
-        let last_newline = text.rfind('\n').map(|i| i + 1).unwrap_or(0);
-        let value_len = text.len() - last_newline;
-        text.push_str(&" ".repeat(LINE_LENGTH.saturating_sub(value_len)));
-        text.push_str(&format!("({};{})", self.loc.0, self.loc.1));*/
-        self.value.display(text, style, ident, return_to_line);
+    fn display(&self,text: &mut String, ident: &str, return_to_line: bool) {
+        self.value.display(text, ident, return_to_line);
     }
 }
 
 impl<T: Shownable + Clone + PartialEq + Debug> Shownable for Leaf<T> {
-    fn display(&self, text: &mut String, style: &mut Stylization, ident: &str, return_to_line: bool) {
-        self.value.display(text, style, ident, return_to_line);
+    fn display(&self, text: &mut String, ident: &str, return_to_line: bool) {
+        self.value.display(text, ident, return_to_line);
     }
 }
 
 impl Shownable for Identifier {
-    fn display(&self,text: &mut String,_style: &mut Stylization, ident: &str, return_to_line: bool) {
+    fn display(&self,text: &mut String, ident: &str, return_to_line: bool) {
         if return_to_line {
             text.push_str("\n");
             text.push_str(ident);
@@ -214,7 +202,6 @@ impl_shownable_enum!(Expression {
 
 pub fn get_html<T: Shownable>(shownable: &T) -> String {
     let mut text = String::new();
-    let mut style = Stylization::new();
-    shownable.display(&mut text, &mut style, "", false);
-    style.apply_to_text(&text)
+    shownable.display(&mut text, "", false);
+    text
 }
