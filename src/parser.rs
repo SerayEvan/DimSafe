@@ -68,14 +68,14 @@ mod tests {
         
         let expected = 
         Spanned::new(RangeIndex::new(0, 16), Expression::Operation{
-                operator: Spanned::new(RangeIndex::new(10, 11), Leaf::from(Operator::ArithmeticMul)),
-                arguments: vec![
+                op: Spanned::new(RangeIndex::new(10, 11), Leaf::from(Operator::ArithmeticMul)),
+                args: vec![
                     Spanned::new(RangeIndex::new(0, 10), Expression::Operation{
-                        operator: Spanned::new(RangeIndex::new(6, 7), Leaf::from(Operator::ArithmeticAdd)),
-                        arguments: vec![
+                        op: Spanned::new(RangeIndex::new(6, 7), Leaf::from(Operator::ArithmeticAdd)),
+                        args: vec![
                             Spanned::new(RangeIndex::new(1, 5), Expression::Operation{
-                                operator: Spanned::new(RangeIndex::new(3, 3), Leaf::from(Operator::Juxtaposition)),
-                                arguments: vec![
+                                op: Spanned::new(RangeIndex::new(3, 3), Leaf::from(Operator::Juxtaposition)),
+                                args: vec![
                                     Spanned::new(RangeIndex::new(1, 2), Expression::Literal(Spanned::new(RangeIndex::new(1, 2), LiteralValue::Integer(1)))),
                                     Spanned::new(RangeIndex::new(3, 5), Expression::Literal(Spanned::new(RangeIndex::new(3, 5), LiteralValue::Unit("m".to_string(), 1.0)))),
                                 ],
@@ -84,8 +84,8 @@ mod tests {
                         ],
                     }),
                     Spanned::new(RangeIndex::new(11, 16), Expression::Operation{
-                        operator: Spanned::new(RangeIndex::new(13, 13), Leaf::from(Operator::Juxtaposition)),
-                        arguments: vec![
+                        op: Spanned::new(RangeIndex::new(13, 13), Leaf::from(Operator::Juxtaposition)),
+                        args: vec![
                             Spanned::new(RangeIndex::new(11, 12), Expression::Literal(Spanned::new(RangeIndex::new(11, 12), LiteralValue::Integer(3)))),
                             Spanned::new(RangeIndex::new(13, 16), Expression::Literal(Spanned::new(RangeIndex::new(13, 16), LiteralValue::Unit("kg".to_string(), 1.0)))),
                         ],

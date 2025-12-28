@@ -22,7 +22,6 @@ use log::Level;
 use storage::*;
 use input::*;
 use parser::*;
-use shownable::*;
 use scope::*;
 
 #[wasm_bindgen(start)]
@@ -35,27 +34,20 @@ pub fn start() -> Result<(), JsValue> {
     mount_to_body(|| {
 
         let signal = local_storage_signal("value".to_string(), Some("".to_string())).unwrap();
-        let output_html = RwSignal::new("".to_string());
+        let ast_signal = RwSignal::new(None);
         let on_change = Callback::new(move |value: String| {
             signal.set(value);
         });
         let on_run = Callback::new(move |value: String| {
             let program = parse_program(&value);
-            match program {
-                Ok(ast) => {
-                    output_html.set(get_html(&ast));
-                }
-                Err(e) => {
-                    output_html.set(e);
-                }
-            }
+            ast_signal.set(Some(program));
         });
 
         view! {
             <div>
                 <h1>"SmartCalc"</h1>
             </div>
-            <CodeInput input_text=signal output_html=output_html on_change=on_change on_run=on_run />
+            <CodeInput input_text=signal ast_signal=ast_signal on_change=on_change on_run=on_run />
             <footer>
                 <p>"© 2025 Evan SERAY — Tous droits réservés"</p>
             </footer>

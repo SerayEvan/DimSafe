@@ -77,7 +77,7 @@ ArrayLevel1: Vec<Spanned<Vec<Spanned<Expression>>>> = {
 };
 
 Array: Expression = {
-  <op: Locate<Leaf<"array_constructor">>> <arr: Locate<ArrayLevel1?>> "]" => Expression::Array{array: arr.map(|arr| arr.unwrap_or(vec![])), constructor: op},
+  <op: Locate<Leaf<"array_constructor">>> <arr: Locate<ArrayLevel1?>> "]" => Expression::Array{arr: arr.map(|arr| arr.unwrap_or(vec![])), op: op},
 };
 
 Value: Expression = {
@@ -94,60 +94,60 @@ Expression: Expression = {
 
   #[precedence(level="2")] #[assoc(side="left")]
   <l: Locate<Expression>> <op: Locate<Leaf<"power_op">>> <r: Locate<Expression>> => Expression::Operation{
-    operator: op,
-    arguments: vec![l,r],
+    op: op,
+    args: vec![l,r],
   },
 
   #[precedence(level="3")] #[assoc(side="right")]
   <l: Locate<Expression>> <loc: Locate<()>> <r: Locate<Expression>> => Expression::Operation{
-    operator: loc.map(|_| Leaf::from(Operator::Juxtaposition)),
-    arguments: vec![l,r],
+    op: loc.map(|_| Leaf::from(Operator::Juxtaposition)),
+    args: vec![l,r],
   },
   
   #[precedence(level="4")] #[assoc(side="left")]
   <l: Locate<Expression>> <op: Locate<Leaf<"multiplicative_op">>> <r: Locate<Expression>> => Expression::Operation{
-    operator: op,
-    arguments: vec![l,r],
+    op: op,
+    args: vec![l,r],
   },
 
   #[precedence(level="5")] #[assoc(side="left")]
   <l: Locate<Expression>> <op: Locate<Leaf<"vector_op">>> <r: Locate<Expression>> => Expression::Operation{
-    operator: op,
-    arguments: vec![l,r],
+    op: op,
+    args: vec![l,r],
   },
 
   #[precedence(level="6")]
   <op: Locate<Leaf<"-">>> <r: Locate<Expression>> => Expression::Operation{
-    operator: op,
-    arguments: vec![r],
+    op: op,
+    args: vec![r],
   },
 
   #[precedence(level="7")] #[assoc(side="left")]
   <l: Locate<Expression>> <op: Locate<Leaf<"+">>> <r: Locate<Expression>> => Expression::Operation{
-    operator: op,
-    arguments: vec![l,r],
+    op: op,
+    args: vec![l,r],
   },
   <l: Locate<Expression>> <op: Locate<Leaf<"-">>> <r: Locate<Expression>> => Expression::Operation{
-    operator: op,
-    arguments: vec![l,r],
+    op: op,
+    args: vec![l,r],
   },
 
   #[precedence(level="8")] #[assoc(side="left")]
   <l: Locate<Expression>> <op: Locate<Leaf<"comp_op">>> <r: Locate<Expression>> => Expression::Operation{
-    operator: op,
-    arguments: vec![l,r],
+    op: op,
+    args: vec![l,r],
   },
 
   #[precedence(level="9")] #[assoc(side="left")]
   <l: Locate<Expression>> <op: Locate<Leaf<"boolean_op">>> <r: Locate<Expression>> => Expression::Operation{
-    operator: op,
-    arguments: vec![l,r],
+    op: op,
+    args: vec![l,r],
   },
 
   #[precedence(level="10")] #[assoc(side="left")]
   <l: Locate<Identifier>> <op: Locate<Leaf<"assign_op">>> <r: Locate<Expression>> => Expression::Assignment{
-    identifier: l,
-    assignment_operator: op,
+    ident: l,
+    op: op,
     value: Box::new(r),
   },
 };

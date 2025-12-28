@@ -5,9 +5,11 @@ use leptos::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::{Window, Element, Node, HtmlElement};
 use leptos::html;
+use log::info;
 
 use crate::lexer::*;
 use crate::stylization::*;
+use crate::shownable::*;
 
 const CURSOR_BEGIN_MARKER: &str = "\u{e001}";
 const CURSOR_END_MARKER: &str = "\u{e002}";
@@ -17,6 +19,7 @@ struct CursorState {
 }
 
 fn insert_marker(parent_node: &Node, offset: u32, marker: &str) {
+
     // Create a Range object from the document owning the parent_node
     let document = parent_node
         .owner_document()
@@ -156,13 +159,12 @@ impl CursorState {
 pub fn CodeInput(
     //cx: Scope,
     #[prop(into)] input_text: RwSignal<String>,
-    #[prop(into)] output_html: RwSignal<String>,
+    #[prop(into)] ast_signal: RwSignal<impl Shownable + Clone>,
     #[prop(into)] on_change: Callback<String>,
     #[prop(into)] on_run: Callback<String>,
 ) -> impl IntoView {
 
     let input_node_ref = NodeRef::<html::Div>::new();
-    let output_html_ref = NodeRef::<html::Div>::new();
 
     Effect::new(move |_| {
 
@@ -193,15 +195,10 @@ pub fn CodeInput(
         CursorState::set_cursor(window);
     });
 
-    Effect::new(move |_| {
-        if let Some(node) = output_html_ref.get() {
-            node.set_inner_html(&output_html.get());
-        }
-    });
-
     let on_run_click = move |_| {
-        let text = input_text.get();
+        let text = input_text.get_untracked();
         let text = CursorState::retrieve_cursor(&text).1;
+        info!("text: {}", text);
         on_run.run(text);
     };
 
@@ -224,15 +221,15 @@ pub fn CodeInput(
                 }
                 on:keydown=move |ev| {
                     if ev.key() == "Enter" {
-                        ev.prevent_default(); // empêche <div> ou <p>
+                        ev.prevent_default(); // prevent <div> or <p>
                         let selection = window().get_selection().expect("Cannot get selection").expect("No selection available");
                         let range = selection.get_range_at(0).expect("Cannot get range");
                     
-                        // Créer un nœud texte contenant un retour à la ligne
+                        // Insert a text node containing a line break
                         let br = document().create_text_node("\n");
                         let _ = range.insert_node(&br);
                     
-                        // Déplacer le curseur après le \n
+                        // Move cursor after the \n
                         let _ = range.set_start_after(&br);
                         let _ = range.set_end_after(&br);
                         let _ = selection.remove_all_ranges();
@@ -250,10 +247,9 @@ pub fn CodeInput(
                 spellcheck="false"
             />
             <button on:click=on_run_click>"Run"</button>
-            <div
-                node_ref=output_html_ref
-                class="output"
-            />
+            <div class="output">
+                {move || ast_signal.read().clone().display()}
+            </div>
         </div>
     }
 }

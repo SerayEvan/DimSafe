@@ -65,20 +65,20 @@ pub enum Expression {
 
     // Non-leaf
     Operation       {
-        operator:            Spanned<Leaf<Operator>>,
-        arguments:           Vec<Spanned<Expression>>,
+        op:            Spanned<Leaf<Operator>>,
+        args:           Vec<Spanned<Expression>>,
     },
     Call            {
-        identifier:          Spanned<Leaf<Identifier>>,
-        arguments:           Vec<Spanned<Expression>>,
+        ident:          Spanned<Leaf<Identifier>>,
+        args:           Vec<Spanned<Expression>>,
     },
     Array           {
-        array:               Spanned<Vec<Spanned<Vec<Spanned<Expression>>>>>,
-        constructor:         Spanned<Leaf<Operator>>,
+        arr:               Spanned<Vec<Spanned<Vec<Spanned<Expression>>>>>,
+        op:         Spanned<Leaf<Operator>>,
     },
     Assignment      {
-        identifier:          Spanned<Leaf<Identifier>>,
-        assignment_operator: Spanned<Leaf<AssignmentOperator>>,
+        op: Spanned<Leaf<AssignmentOperator>>,
+        ident:          Spanned<Leaf<Identifier>>,
         value:               Box<Spanned<Expression>>,
     },
 }
@@ -94,21 +94,21 @@ impl AstNode for Expression {
             Expression::Identifier(identifier) => identifier.rev_location(block, lines_index),
 
             // Non-leaf
-            Expression::Operation { operator, arguments } => {
-                operator.rev_location(block, lines_index);
-                arguments.rev_location(block, lines_index);
+            Expression::Operation { op, args } => {
+                op.rev_location(block, lines_index);
+                args.rev_location(block, lines_index);
             }
-            Expression::Call { identifier, arguments } => {
-                identifier.rev_location(block, lines_index);
-                arguments.rev_location(block, lines_index);
+            Expression::Call { ident, args } => {
+                ident.rev_location(block, lines_index);
+                args.rev_location(block, lines_index);
             }
-            Expression::Array { array, constructor } => {
-                array.rev_location(block, lines_index);
-                constructor.rev_location(block, lines_index);
+            Expression::Array { arr, op } => {
+                arr.rev_location(block, lines_index);
+                op.rev_location(block, lines_index);
             }
-            Expression::Assignment { identifier, assignment_operator, value } => {
-                identifier.rev_location(block, lines_index);
-                assignment_operator.rev_location(block, lines_index);
+            Expression::Assignment { op, ident, value } => {
+                op.rev_location(block, lines_index);
+                ident.rev_location(block, lines_index);
                 value.rev_location(block, lines_index);
             }
         }
@@ -125,29 +125,29 @@ impl AstNode for Expression {
             },
 
             // Non-leaf
-            Expression::Operation { operator, arguments } => {
-                let operator = operator.evaluate(scope)?;
-                let arguments = arguments.evaluate(scope)?;
-                operator.compute(&arguments)
+            Expression::Operation { op, args } => {
+                let op = op.evaluate(scope)?;
+                let args = args.evaluate(scope)?;
+                op.compute(&args)
             }
-            Expression::Call { identifier, arguments } => {
+            Expression::Call { ident, args } => {
                 /*let arguments = arguments.evaluate(scope)?;
                 let identifier = identifier.evaluate(scope)?;
                 let func = scope.get_function(identifier)?;
                 func.call(arguments)*/
                 UnsupportedError{functionality: "function call not implemented"}.raise()
             }
-            Expression::Array { array, constructor } => {
+            Expression::Array { arr, op } => {
                 /*let array = array.evaluate(scope)?;
-                let constructor = constructor.evaluate(scope)?;
-                constructor.compute(&array)*/
+                let op = op.evaluate(scope)?;
+                op.compute(&arr)*/
                 UnsupportedError{functionality: "array not implemented"}.raise()
             }
-            Expression::Assignment { identifier, assignment_operator, value } => {
+            Expression::Assignment { op, ident, value } => {
                 let value = value.evaluate(scope)?;
-                let identifier = identifier.evaluate(scope)?;
-                let assignment_operator = assignment_operator.evaluate(scope)?;
-                scope.assign_value(&identifier, value, &assignment_operator)?;
+                let ident = ident.evaluate(scope)?;
+                let op = op.evaluate(scope)?;
+                scope.assign_value(&ident, value, &op)?;
                 Ok(Value::Scalar(Box::new((Scalar::Empty, DEFAULT_UNIT))))
             }
         }
@@ -158,28 +158,28 @@ impl AstNode for Expression {
         match (a, b) {
             (Expression::Literal(a), Expression::Literal(b)) => Spanned::difference(prefix, &a, &b),
             (Expression::Identifier(a), Expression::Identifier(b)) => Spanned::difference(prefix, &a, &b),
-            (Expression::Operation { operator: a, arguments: a_arguments }, Expression::Operation { operator: b, arguments: b_arguments }) => {
+            (Expression::Operation { op: a, args: a_args }, Expression::Operation { op: b, args: b_args }) => {
                 let mut result = Vec::new();
                 result.extend(Spanned::difference(format!("{}:operator", prefix).as_str(), &a, &b));
-                result.extend(Vec::difference(format!("{}:arguments", prefix).as_str(), &a_arguments, &b_arguments));
+                result.extend(Vec::difference(format!("{}:arguments", prefix).as_str(), &a_args, &b_args));
                 result
             }
-            (Expression::Call { identifier: a, arguments: a_arguments }, Expression::Call { identifier: b, arguments: b_arguments }) => {
+            (Expression::Call { ident: a, args: a_args }, Expression::Call { ident: b, args: b_args }) => {
                 let mut result = Vec::new();
                 result.extend(Spanned::difference(format!("{}:identifier", prefix).as_str(), &a, &b));
-                result.extend(Vec::difference(format!("{}:arguments", prefix).as_str(), &a_arguments, &b_arguments));
+                result.extend(Vec::difference(format!("{}:arguments", prefix).as_str(), &a_args, &b_args));
                 result
             }
-            (Expression::Array { array: a, constructor: a_constructor }, Expression::Array { array: b, constructor: b_constructor }) => {
+            (Expression::Array { arr: a, op: a_op }, Expression::Array { arr: b, op: b_op }) => {
                 let mut result = Vec::new();
                 result.extend(Spanned::difference(format!("{}:array", prefix).as_str(), &a, &b));
-                result.extend(Spanned::difference(format!("{}:constructor", prefix).as_str(), &a, &b));
+                result.extend(Spanned::difference(format!("{}:op", prefix).as_str(), &a_op, &b_op));
                 result
             }
-            (Expression::Assignment { identifier: a, assignment_operator: a_assignment_operator, value: a_value }, Expression::Assignment { identifier: b, assignment_operator: b_assignment_operator, value: b_value }) => {
+            (Expression::Assignment { op: a, ident: a_ident, value: a_value }, Expression::Assignment { op: b, ident: b_ident, value: b_value }) => {
                 let mut result = Vec::new();
-                result.extend(Spanned::difference(format!("{}:identifier", prefix).as_str(), &a, &b));
-                result.extend(Spanned::difference(format!("{}:assignment_operator", prefix).as_str(), &a, &b));
+                result.extend(Spanned::difference(format!("{}:op", prefix).as_str(), &a, &b));
+                result.extend(Spanned::difference(format!("{}:ident", prefix).as_str(), &a_ident, &b_ident));
                 result.extend(Spanned::difference(format!("{}:value", prefix).as_str(), &a, &b));
                 result
             }
