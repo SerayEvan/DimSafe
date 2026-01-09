@@ -50,7 +50,7 @@ pub fn parse_program(input: &str) -> Result<Vec<Spanned<Expression>>, String> {
 mod tests {
     use super::*;
 
-    use crate::scope::operator::*;
+    use crate::operator::*;
 
     #[test]
     fn test_get_lines_pos() {

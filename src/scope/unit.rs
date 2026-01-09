@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2025 Evan SERAY
 
-use std::ops::{Mul, Div};
+use std::ops::{Mul, Div, Add, Sub};
 use std::cmp::{PartialEq};
 use std::collections::HashMap;
+use lazy_static::lazy_static;
 
 const NUMBER_OF_UNITS: usize = 7;
 
@@ -15,261 +16,329 @@ const TEMPERATURE_DIM: usize = 4;
 const AMOUNT_OF_SUBSTANCE_DIM: usize = 5;
 const LUMINOUS_INTENSITY_DIM: usize = 6;
 
-#[derive(Debug, Clone)]
-pub struct UnitDimension {
-    dim: [f32; NUMBER_OF_UNITS],
+#[derive(Debug, Clone, Copy)]
+pub enum UnitDimension {
+    Define ( [f32; NUMBER_OF_UNITS] ),
+    Error,
+    Unmonitor,
 }
 
 impl UnitDimension {
+    const fn no_dim() -> Self {
+        Self::Define([0.0; NUMBER_OF_UNITS])
+    }
     const fn from_index(index: usize) -> Self {
         let mut dim = [0.0; NUMBER_OF_UNITS];
         dim[index] = 1.0;
-        Self { dim }
+        Self::Define(dim)
     }
-}
-
-impl Mul<&UnitDimension> for UnitDimension {
-    type Output = Self;
-    fn mul(self, b: &UnitDimension) -> Self::Output {
-        let mut dim = [0.0; NUMBER_OF_UNITS];
-        for i in 0..NUMBER_OF_UNITS {
-            dim[i] = self.dim[i] + b.dim[i];
-        }
-        Self {
-            dim,
+    fn is_error(&self) -> bool {
+        match self {
+            Self::Error => true,
+            _ => false,
         }
     }
 }
-impl Div<&UnitDimension> for UnitDimension {
+impl Add<UnitDimension> for UnitDimension {
     type Output = Self;
-    fn div(self, b: &UnitDimension) -> Self::Output {
-        let mut dim = [0.0; NUMBER_OF_UNITS];
-        for i in 0..NUMBER_OF_UNITS {
-            dim[i] = self.dim[i] - b.dim[i];
+    fn add(self, b: UnitDimension) -> Self::Output {
+        match (self, b) {
+            (Self::Define(dim1), Self::Define(dim2)) => {
+                for i in 0..NUMBER_OF_UNITS {
+                    if dim1[i] != dim2[i] {
+                        return Self::Error;
+                    }
+                }
+                self.clone()
+            }
+            (Self::Error, _) => Self::Error,
+            (_, Self::Error) => Self::Error,
+            (Self::Unmonitor, _) => Self::Unmonitor,
+            (_ , Self::Unmonitor) => Self::Unmonitor
         }
-        Self { dim }
+    }
+}
+impl Sub<UnitDimension> for UnitDimension {
+    type Output = Self;
+    fn sub(self, b: UnitDimension) -> Self::Output {
+        match (self, b) {
+            (Self::Define(dim1), Self::Define(dim2)) => {
+                for i in 0..NUMBER_OF_UNITS {
+                    if dim1[i] != dim2[i] {
+                        return Self::Error;
+                    }
+                }
+                self.clone()
+            }
+            (Self::Error, _) => Self::Error,
+            (_, Self::Error) => Self::Error,
+            (Self::Unmonitor, _) => Self::Unmonitor,
+            (_ , Self::Unmonitor) => Self::Unmonitor
+        }
+    }
+}
+impl Mul<UnitDimension> for UnitDimension {
+    type Output = Self;
+    fn mul(self, b: UnitDimension) -> Self::Output {
+        match (self, b) {
+            (Self::Define(dim1), Self::Define(dim2)) => {
+                let mut dim = [0.0; NUMBER_OF_UNITS];
+                for i in 0..NUMBER_OF_UNITS {
+                    dim[i] = dim1[i] + dim2[i];
+                }
+                Self::Define(dim)
+            }
+            (Self::Error, _) => Self::Error,
+            (_, Self::Error) => Self::Error,
+            (Self::Unmonitor, _) => Self::Unmonitor,
+            (_ , Self::Unmonitor) => Self::Unmonitor
+        }
+    }
+}
+impl Div<UnitDimension> for UnitDimension {
+    type Output = Self;
+    fn div(self, b: UnitDimension) -> Self::Output {
+        match (self, b) {
+            (Self::Define(dim1), Self::Define(dim2)) => {
+                let mut dim = [0.0; NUMBER_OF_UNITS];
+                for i in 0..NUMBER_OF_UNITS {
+                    dim[i] = dim1[i] - dim2[i];
+                }
+                Self::Define(dim)
+            }
+            (Self::Error, _) => Self::Error,
+            (_, Self::Error) => Self::Error,
+            (Self::Unmonitor, _) => Self::Unmonitor,
+            (_ , Self::Unmonitor) => Self::Unmonitor
+        }
+    }
+}
+impl Div<f64> for UnitDimension {
+    type Output = Self;
+    fn div(self, b: f64) -> Self::Output {
+        self
+    }
+}
+impl Div<UnitDimension> for f64 {
+    type Output = UnitDimension;
+    fn div(self, b: UnitDimension) -> Self::Output {
+        match b {
+            UnitDimension::Define(dim) => {
+                let mut dim = [0.0; NUMBER_OF_UNITS];
+                for i in 0..NUMBER_OF_UNITS {
+                    dim[i] = 1.0 - dim[i];
+                }
+                UnitDimension::Define(dim)
+            }
+            UnitDimension::Error => UnitDimension::Error,
+            UnitDimension::Unmonitor => UnitDimension::Unmonitor,
+        }
     }
 }
 impl UnitDimension {
-    pub fn powf(&self, b: f32) -> Self {
-        let mut dim = [0.0; NUMBER_OF_UNITS];
-        for i in 0..NUMBER_OF_UNITS {
-            dim[i] = dim[i] * b;
+    pub fn powf(&self, b: f64) -> Self {
+        match self {
+            Self::Define(dim) => {
+                let mut mul_dim = [0.0; NUMBER_OF_UNITS];
+                for i in 0..NUMBER_OF_UNITS {
+                    mul_dim[i] = dim[i] * b as f32;
+                }
+                Self::Define(mul_dim)
+            }
+            _ => self.clone(),
         }
-        Self { dim }
     }
 }
 impl PartialEq for UnitDimension {
     fn eq(&self, other: &Self) -> bool {
-        for i in 0..NUMBER_OF_UNITS {
-            if self.dim[i] != other.dim[i] {
-                return false;
+        match (self, other) {
+            (Self::Define(dim1), Self::Define(dim2)) => {
+                for i in 0..NUMBER_OF_UNITS {
+                    if dim1[i] != dim2[i] {
+                        return false;
+                    }
+                }
+                true
             }
+            (Self::Error, _) => false,
+            (_, Self::Error) => false,
+            (Self::Unmonitor, _) => true,
+            (_ , Self::Unmonitor) => true,
         }
-        true
     }
     fn ne(&self, other: &Self) -> bool {
         !self.eq(other)
     }
 }
 
-#[derive(Debug, Clone)]
-pub enum Unit {
-    Define {
-        factor: f32,
-        dimension: UnitDimension,
-    },
-    Unmonitor,
-    Error,
+#[derive(Debug, Clone, Copy)]
+pub struct Unit {
+    pub factor: f64,
+    pub dimension: UnitDimension,
 }
 impl Unit {
-    fn from_index(index: usize) -> Self {
-        Self::Define {
+    const fn no_dim() -> Self {
+        Self {
+            factor: 1.0,
+            dimension: UnitDimension::no_dim(),
+        }
+    }
+    const fn from_index(index: usize) -> Self {
+        Self {
             factor: 1.0,
             dimension: UnitDimension::from_index(index),
         }
     }
-    fn derive_from_label(dim_dict: &mut HashMap<String, Unit>, unit_dim: &Unit, label: &str) {
-        let pow_prefix = ["f", "p", "n", "µ", "m", "c", "d", "", "da", "h", "k", "M", "G", "T", "P"];
-        let pow_values = [1e-15, 1e-12, 1e-9, 1e-6, 1e-3, 1e-2, 1e-1, 1.0, 1e1, 1e2, 1e3, 1e6, 1e9, 1e12, 1e15];
-        for i in 0..pow_prefix.len() {
-            let p_lab = pow_prefix[i];
-            let p_val = pow_values[i];
-            let unit = unit_dim.clone() * p_val;
-            dim_dict.insert(p_lab.to_string() + label, unit);
-        }
-    }
 }
-impl PartialEq for Unit {
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::Define { factor: f1, dimension: d1 }, Self::Define { factor: f2, dimension: d2 }) => f1 == f2 && d1 == d2,
-            (Self::Error, _) => true,
-            (Self::Unmonitor, _) => true,
-            (_, Self::Error) => true,
-            (_, Self::Unmonitor) => true,
-        }
-    }
-}
-impl Mul<&Unit> for Unit {
+impl Mul<Unit> for Unit {
     type Output = Self;
-    fn mul(self, b: &Unit) -> Self::Output {
-        match (self, b) {
-            (Self::Define { factor: f1, dimension: d1 }, Self::Define { factor: f2, dimension: d2 }) => {
-                Self::Define {
-                    factor: f1 * f2,
-                    dimension: d1 * &d2,
-                }
-            }
-            (Self::Error, _) => Self::Error,
-            (_, Self::Error) => Self::Error,
-            (Self::Unmonitor, _) => Self::Unmonitor,
-            (_ , Self::Unmonitor) => Self::Unmonitor
+    fn mul(self, b: Unit) -> Self::Output {
+        Self {
+            factor: self.factor * b.factor,
+            dimension: self.dimension * b.dimension,
         }
     }
 }
-impl Mul<f32> for Unit {
+impl Mul<f64> for Unit {
     type Output = Self;
-    fn mul(self, b: f32) -> Self::Output {
-        match self {
-            Self::Define { factor: f, dimension: d } => Self::Define {
-                factor: f * b,
-                dimension: d,
-            },
-            Self::Unmonitor => Self::Unmonitor,
-            Self::Error => Self::Error,
+    fn mul(self, b: f64) -> Self::Output {
+        Self {
+            factor: self.factor * b,
+            dimension: self.dimension,
         }
     }
 }
-impl Div<&Unit> for Unit {
+impl Div<Unit> for Unit {
     type Output = Self;
-    fn div(self, b: &Unit) -> Self::Output {
-        match (self, b) {
-            (Self::Define { factor: f1, dimension: d1 }, Self::Define { factor: f2, dimension: d2 }) => {
-                Self::Define {
-                    factor: f1 / f2,
-                    dimension: d1 / &d2,
-                }
-            },
-            (Self::Error, _) => Self::Error,
-            (_, Self::Error) => Self::Error,
-            (Self::Unmonitor, _) => Self::Unmonitor,
-            (_ , Self::Unmonitor) => Self::Unmonitor
+    fn div(self, b: Unit) -> Self::Output {
+        Self {
+            factor: self.factor / b.factor,
+            dimension: self.dimension / b.dimension,
         }
     }
 }
-impl Div<f32> for Unit {
+impl Div<f64> for Unit {
     type Output = Self;
-    fn div(self, b: f32) -> Self::Output {
-        match self {
-                Self::Define { factor: f, dimension: d } => Self::Define {
-                factor: f / b,
-                dimension: d,
-            },
-            Self::Unmonitor => Self::Unmonitor,
-            Self::Error => Self::Error,
+    fn div(self, b: f64) -> Self::Output {
+        Self {
+            factor: self.factor / b,
+            dimension: self.dimension / b,
+        }
+    }
+}
+impl Div<Unit> for f64 {
+    type Output = Unit;
+    fn div(self, b: Unit) -> Self::Output {
+        Unit {
+            factor: self / b.factor,
+            dimension: self / b.dimension,
         }
     }
 }
 impl Unit {
-    pub fn powf(&self, b: f32) -> Self {
-        match self {
-            Self::Define { factor: f, dimension: d } => Self::Define {
-                factor: f.powf(b),
-                dimension: d.powf(b),
-            },
-            Self::Unmonitor => Self::Unmonitor,
-            Self::Error => Self::Error,
+    pub fn powf(&self, b: f64) -> Self {
+        Self {
+            factor: self.factor.powf(b),
+            dimension: self.dimension.powf(b),
         }
     }
 }
 
-pub const DEFAULT_UNIT: Unit = Unit::Define {
+pub const DEFAULT_UNIT: Unit = Unit {
     factor: 1.0,
-    dimension: UnitDimension { dim: [0.0; NUMBER_OF_UNITS] },
+    dimension: UnitDimension::Define([0.0; NUMBER_OF_UNITS]),
 };
+
+pub const ERROR_UNIT: Unit = Unit {
+    factor: 1.0,
+    dimension: UnitDimension::Error,
+};
+pub const UNMONITOR_UNIT: Unit = Unit {
+    factor: 1.0,
+    dimension: UnitDimension::Unmonitor,
+};
+
+pub const NO_DIMENSION: UnitDimension = UnitDimension::no_dim();
+pub const NO_UNIT: Unit = Unit::no_dim();
+const METERS_UNIT: Unit = Unit::from_index(LENGTH_DIM);
+const SECONDS_UNIT: Unit = Unit::from_index(TIME_DIM);
+const KILOGRAMS_UNIT: Unit = Unit::from_index(MASS_DIM);
+const AMPERES_UNIT: Unit = Unit::from_index(CURRENT_DIM);
+const KELVINS_UNIT: Unit = Unit::from_index(TEMPERATURE_DIM);
+const MOLES_UNIT: Unit = Unit::from_index(AMOUNT_OF_SUBSTANCE_DIM);
+const CANDLEAS_UNIT: Unit = Unit::from_index(LUMINOUS_INTENSITY_DIM);
+
+fn derive_from_label(dim_dict: &mut HashMap<String, Unit>, unit_dim: Unit, label: &str) {
+    let pow_prefix = ["f", "p", "n", "µ", "m", "c", "d", "", "da", "h", "k", "M", "G", "T", "P"];
+    let pow_values = [1e-15, 1e-12, 1e-9, 1e-6, 1e-3, 1e-2, 1e-1, 1.0, 1e1, 1e2, 1e3, 1e6, 1e9, 1e12, 1e15];
+    for i in 0..pow_prefix.len() {
+        let p_lab = pow_prefix[i];
+        let p_val = pow_values[i];
+        let unit = unit_dim * p_val;
+        dim_dict.insert(p_lab.to_string() + label, unit);
+    }
+}
+
+fn si_units(dict: &mut HashMap<String, Unit>) {
+    derive_from_label(dict, METERS_UNIT, "m");
+    derive_from_label(dict, SECONDS_UNIT, "s");
+    derive_from_label(dict, KILOGRAMS_UNIT, "kg");
+    derive_from_label(dict, AMPERES_UNIT, "A");
+    derive_from_label(dict, KELVINS_UNIT, "K");
+    derive_from_label(dict, MOLES_UNIT, "mol");
+    derive_from_label(dict, CANDLEAS_UNIT, "cd");
+}
 
 fn make_unit_dictionary() -> HashMap<String, Unit> {
 
     let mut dict = HashMap::new();
 
-    let meters_dim = Unit::from_index(LENGTH_DIM);
-    Unit::derive_from_label(&mut dict, &meters_dim, "m");
-    let seconds_dim = Unit::from_index(TIME_DIM);
-    Unit::derive_from_label(&mut dict, &seconds_dim, "s");
-    let kilograms_dim = Unit::from_index(MASS_DIM);
-    Unit::derive_from_label(&mut dict, &kilograms_dim, "kg");
-    let amperes_dim = Unit::from_index(CURRENT_DIM);
-    Unit::derive_from_label(&mut dict, &amperes_dim, "A");
-    let kelvins_dim = Unit::from_index(TEMPERATURE_DIM);
-    Unit::derive_from_label(&mut dict, &kelvins_dim, "K");
-    let moles_dim = Unit::from_index(AMOUNT_OF_SUBSTANCE_DIM);
-    Unit::derive_from_label(&mut dict, &moles_dim, "mol");
-    let candelas_dim = Unit::from_index(LUMINOUS_INTENSITY_DIM);
-    Unit::derive_from_label(&mut dict, &candelas_dim, "cd");
+    // SI units
+    derive_from_label(&mut dict, METERS_UNIT, "m");
+    derive_from_label(&mut dict, SECONDS_UNIT, "s");
+    derive_from_label(&mut dict, KILOGRAMS_UNIT, "kg");
+    derive_from_label(&mut dict, AMPERES_UNIT, "A");
+    derive_from_label(&mut dict, KELVINS_UNIT, "K");
+    derive_from_label(&mut dict, MOLES_UNIT, "mol");
+    derive_from_label(&mut dict, CANDLEAS_UNIT, "cd");
 
-    let watts_dim = meters_dim.powf(2.0) * &kilograms_dim * &seconds_dim.powf(-3.0);
-    Unit::derive_from_label(&mut dict, &watts_dim, "W");
+    let watts_dim = METERS_UNIT.powf(2.0) * KILOGRAMS_UNIT * SECONDS_UNIT.powf(-3.0);
+    derive_from_label(&mut dict, watts_dim, "W");
 
-    let joules_dim = meters_dim.powf(2.0) * &kilograms_dim * &seconds_dim.powf(-2.0);
-    Unit::derive_from_label(&mut dict, &joules_dim, "J");
+    let joules_dim = METERS_UNIT.powf(2.0) * KILOGRAMS_UNIT * SECONDS_UNIT.powf(-2.0);
+    derive_from_label(&mut dict, joules_dim, "J");
 
-    let newtons_dim = seconds_dim.powf(-2.0) * &meters_dim * &kilograms_dim;
-    Unit::derive_from_label(&mut dict, &newtons_dim, "N");
+    let newtons_dim = SECONDS_UNIT.powf(-2.0) * METERS_UNIT * KILOGRAMS_UNIT;
+    derive_from_label(&mut dict, newtons_dim, "N");
 
-    let pascals_dim = meters_dim.powf(-1.0) * &kilograms_dim * &seconds_dim.powf(-2.0);
-    Unit::derive_from_label(&mut dict, &pascals_dim, "Pa");
+    let pascals_dim = METERS_UNIT.powf(-1.0) * KILOGRAMS_UNIT * SECONDS_UNIT.powf(-2.0);
+    derive_from_label(&mut dict, pascals_dim, "Pa");
 
-    let volts_dim = meters_dim.powf(2.0) * &kilograms_dim * &seconds_dim.powf(-3.0) * &amperes_dim.powf(-1.0);
-    Unit::derive_from_label(&mut dict, &volts_dim, "V");
+    let volts_dim = METERS_UNIT.powf(2.0) * KILOGRAMS_UNIT * SECONDS_UNIT.powf(-3.0) * AMPERES_UNIT.powf(-1.0);
+    derive_from_label(&mut dict, volts_dim, "V");
 
-    let ohms_dim = amperes_dim.powf(-1.0) * &volts_dim;
-    Unit::derive_from_label(&mut dict, &ohms_dim, "Ohm");
+    let ohms_dim = AMPERES_UNIT.powf(-1.0) * volts_dim;
+    derive_from_label(&mut dict, ohms_dim, "Ohm");
 
-    let teslas_dim = seconds_dim.powf(-2.0) * &kilograms_dim * &amperes_dim.powf(-1.0);
-    Unit::derive_from_label(&mut dict, &teslas_dim, "T");
+    let teslas_dim = SECONDS_UNIT.powf(-2.0) * KILOGRAMS_UNIT * AMPERES_UNIT.powf(-1.0);
+    derive_from_label(&mut dict, teslas_dim, "T");
 
-    let hertzs_dim = seconds_dim.powf(-1.0);
-    Unit::derive_from_label(&mut dict, &hertzs_dim, "Hz");
+    let hertzs_dim = SECONDS_UNIT.powf(-1.0);
+    derive_from_label(&mut dict, hertzs_dim, "Hz");
 
-    let no_dim = Unit::from_index(0);
-    dict.insert("tour".to_string(), no_dim.clone() * std::f32::consts::PI * 2.0);
-    dict.insert("rad".to_string(), no_dim.clone());
-    dict.insert("deg".to_string(), no_dim * std::f32::consts::PI / 180.0);
+    dict.insert("rpm".to_string(),  std::f64::consts::PI * 2.0 / SECONDS_UNIT / 60.0);
+    dict.insert("rad".to_string(), NO_UNIT);
+    dict.insert("deg".to_string(), NO_UNIT * std::f64::consts::PI / 180.0);
 
-    dict.insert("minute".to_string(), seconds_dim.clone() * 60.0);
-    dict.insert("hour".to_string(), seconds_dim * 3600.0);
+    dict.insert("minute".to_string(), SECONDS_UNIT * 60.0);
+    dict.insert("hour".to_string(), SECONDS_UNIT * 3600.0);
 
-    dict.insert("error".to_string(), Unit::Error);
-    dict.insert("unmonitor".to_string(), Unit::Unmonitor);
+    dict.insert("error".to_string(), ERROR_UNIT);
+    dict.insert("unmonitor".to_string(), UNMONITOR_UNIT);
 
     dict
 }
 
-/*pub fn parse_unit(input: &str) -> Option<Unit> {
-
-    // split string in 2 parts : [unit] [exponent with optional + or -]
-    let mut split_idx = 0;
-    for c in input.chars() {
-        if c == '+' || c == '-' || c < '0' || c > '9' {
-            break;
-        }
-        split_idx += 1;
-    }
-
-    let unit = find_unit(&input[..split_idx])?;
-    if split_idx == input.len() { return Some(unit); }
-
-    let exponent = input[split_idx..].parse::<i32>().ok()? as f32;
-
-    Some(unit.powf(exponent))
-}*/
-
-/*
-
-        | n*n*row | n*n*col | n*n*block | n*n*cell
-choice
-
-16*16*16*16
-
-*/
+lazy_static! {
+    pub static ref UNIT_DICTIONARY: HashMap<String, Unit> = make_unit_dictionary();
+}

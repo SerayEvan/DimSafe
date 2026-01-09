@@ -28,6 +28,8 @@ lalrpop-util = { version = "0.22.2", features = ["lexer", "unicode"] }
 logos = "0.14.2"
 lazy_static = "1.5"
 
+nalgebra = "0.34"
+
 [build-dependencies]
 lalrpop = "0.22.2"
 logos = "0.14.2"

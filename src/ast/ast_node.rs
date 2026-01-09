@@ -4,13 +4,13 @@
 use std::ops::Deref;
 use std::fmt::Debug;
 
-use crate::error::*;
 use crate::scope::*;
+use crate::error::collector::*;
 
 pub trait AstNode {
     type Output: Clone;
     fn rev_location(&mut self, block: usize, lines_index: &[usize]);
-    fn evaluate(&self, scope: &mut Scope) -> Result<Self::Output, Error>;
+    fn evaluate(&self, scope: &mut Scope, errors: &mut ErrorCollector) -> Self::Output;
 
     #[cfg(test)]
     fn difference(prefix: &str, a: &Self, b: &Self) -> Vec<String>;
@@ -23,12 +23,12 @@ impl<U: AstNode> AstNode for Vec<U> {
             item.rev_location(block, lines_index);
         }
     }
-    fn evaluate(&self, scope: &mut Scope) -> Result<Vec<U::Output>, Error> {
+    fn evaluate(&self, scope: &mut Scope, errors: &mut ErrorCollector) -> Vec<U::Output> {
         let mut result = Vec::new();
         for item in self {
-            result.push(item.evaluate(scope)?);
+            result.push(item.evaluate(scope, errors));
         }
-        Ok(result)
+        result
     }
 
     #[cfg(test)]
@@ -53,10 +53,10 @@ impl<U: AstNode> AstNode for Option<U> {
         }
     }
     
-    fn evaluate(&self, scope: &mut Scope) -> Result<Option<U::Output>, Error> {
+    fn evaluate(&self, scope: &mut Scope, errors: &mut ErrorCollector) -> Option<U::Output> {
         match self {
-            Some(value) => Ok(Some(value.evaluate(scope)?)),
-            None => Ok(None),
+            Some(value) => Some(value.evaluate(scope, errors)),
+            None => None,
         }
     }
 
@@ -79,8 +79,8 @@ impl<U: AstNode, V: AstNode> AstNode for (U, V) {
         self.1.rev_location(block, lines_index);
     }
     
-    fn evaluate(&self, scope: &mut Scope) -> Result<(U::Output, V::Output), Error> {
-        Ok((self.0.evaluate(scope)?, self.1.evaluate(scope)?))
+    fn evaluate(&self, scope: &mut Scope, errors: &mut ErrorCollector) -> (U::Output, V::Output) {
+        (self.0.evaluate(scope, errors), self.1.evaluate(scope, errors))
     }
 
     #[cfg(test)]
@@ -108,8 +108,8 @@ impl<T: Clone + PartialEq + Debug> AstNode for Leaf<T> {
     
     fn rev_location(&mut self, _block: usize, _lines_index: &[usize]) {}
     
-    fn evaluate(&self, _scope: &mut Scope) -> Result<T, Error> {
-        Ok(self.value.clone())
+    fn evaluate(&self, _scope: &mut Scope, _errors: &mut ErrorCollector) -> T {
+        self.value.clone()
     }
     
     #[cfg(test)]
@@ -135,8 +135,8 @@ impl AstNode for () {
         ()
     }
 
-    fn evaluate(&self, _scope: &mut Scope) -> Result<(), Error> {
-        Ok(())
+    fn evaluate(&self, _scope: &mut Scope, _errors: &mut ErrorCollector) -> () {
+        ()
     }
     
     #[cfg(test)]

@@ -12,17 +12,21 @@ mod shownable;
 mod interperter;
 mod scope;
 mod error;
+mod operator;
 
 use wasm_bindgen::prelude::*;
 use leptos::prelude::*;
 use console_error_panic_hook;
 use console_log;
 use log::Level;
+use log::info;
 
 use storage::*;
 use input::*;
 use parser::*;
 use scope::*;
+use error::collector::*;
+use ast::ast_node::*;
 
 #[wasm_bindgen(start)]
 pub fn start() -> Result<(), JsValue> {
@@ -40,7 +44,16 @@ pub fn start() -> Result<(), JsValue> {
         });
         let on_run = Callback::new(move |value: String| {
             let program = parse_program(&value);
-            ast_signal.set(Some(program));
+            if let Ok(program) = program {
+                let mut scope = Scope::new();
+                let mut errors = ErrorCollector::new();
+                let result = program.evaluate(&mut scope, &mut errors);
+                info!("{}", errors.into_string());
+                ast_signal.set(Some(program));
+            }
+            else {
+                ast_signal.set(None);
+            }
         });
 
         view! {

@@ -5,12 +5,14 @@ pub mod location;
 pub mod ast_node;
 
 use crate::ast::ast_node::*;
+use crate::scope::value::Scalar;
 use crate::scope::*;
 use crate::scope::value::*;
-use crate::scope::scalar::*;
 use crate::scope::unit::*;
-use crate::scope::operator::*;
+use crate::operator::*;
+use crate::operator::table::*;
 use crate::error::*;
+use crate::error::collector::*;
 
 use super::ast::location::*;
 
@@ -19,32 +21,38 @@ pub enum LiteralValue {
     Integer(i64),
     Float(f64),
     String(String),
-    Unit(String, f32),
+    Unit(String, f64),
     Bool(bool),
     Empty,
-    Unspecified,
-    Unimplemented,
-    Invalid,
+    Failed,
 }
 impl AstNode for LiteralValue {
     type Output = Value;
     fn rev_location(&mut self, _block: usize, _lines_index: &[usize]) {}
-    fn evaluate(&self, _scope: &mut Scope) -> Result<Value, Error> {
-        Ok(match self {
-            LiteralValue::Integer(integer)  => Value::Scalar(Box::new((Scalar::Integer(Integer { value: *integer }), DEFAULT_UNIT))),
-            LiteralValue::Float(float)      => Value::Scalar(Box::new((Scalar::Float(Float { value: *float }), DEFAULT_UNIT))),
-            LiteralValue::String(string) => Value::String(Box::new(string.clone())),
-            LiteralValue::Bool(bool)       => Value::Scalar(Box::new((Scalar::Boolean(Boolean { value: *bool }), DEFAULT_UNIT))),
-            LiteralValue::Empty                   => Value::Scalar(Box::new((Scalar::Empty, DEFAULT_UNIT))),
-            LiteralValue::Unspecified             => Value::Scalar(Box::new((Scalar::Unspecified, DEFAULT_UNIT))),
-            LiteralValue::Unimplemented           => Value::Scalar(Box::new((Scalar::Unimplemented, DEFAULT_UNIT))),
-            LiteralValue::Invalid                 => Value::Scalar(Box::new((Scalar::Invalid, DEFAULT_UNIT))),
-            LiteralValue::Unit(unit, exponent) => {
-                let identifier = Identifier { text: vec![unit.clone()] };
-                let unit = _scope.get_unit(&identifier)?.powf(*exponent);
-                Value::Scalar(Box::new((Scalar::Integer(Integer { value: 1 }), unit)))
+    fn evaluate(&self, _scope: &mut Scope, errors: &mut ErrorCollector) -> Value {
+        match self {
+            LiteralValue::Integer(integer)  => Value::Scalar(Scalar{ value: *integer as f64, unit: NO_DIMENSION }),
+            LiteralValue::Float(float)      => Value::Scalar(Scalar{ value: *float, unit: NO_DIMENSION }),
+            LiteralValue::String(_string) => {
+                errors.raise(UnsupportedError{functionality: "string"});
+                Value::Failed
             },
-        })
+            LiteralValue::Bool(_bool)       => {
+                errors.raise(UnsupportedError{functionality: "bool"});
+                Value::Failed
+            },
+            LiteralValue::Empty                   => Value::Empty,
+            LiteralValue::Failed                  => Value::Failed,
+            LiteralValue::Unit(label, exponent) => {
+                if let Some(unit) = UNIT_DICTIONARY.get(label) {
+                    let unit = unit.powf(*exponent);
+                    Value::Scalar(Scalar{value: unit.factor, unit: unit.dimension})
+                } else {
+                    errors.raise(UnfoundUnitError{unit_name: label.to_string()});
+                    Value::Failed
+                }
+            },
+        }
     }
     
     #[cfg(test)]
@@ -114,41 +122,38 @@ impl AstNode for Expression {
         }
     }
     
-    fn evaluate(&self, scope: &mut Scope,) -> Result<Value, Error> {
+    fn evaluate(&self, scope: &mut Scope, errors: &mut ErrorCollector) -> Value {
         match self {
 
             // Leaf
-            Expression::Literal(value) => value.evaluate(scope),
+            Expression::Literal(value) => value.evaluate(scope, errors),
             Expression::Identifier(identifier) => { 
-                let identifier = identifier.evaluate(scope)?;
-                scope.get_value(&identifier) 
+                let identifier = identifier.evaluate(scope, errors);
+                scope.get_value(&identifier, errors) 
             },
 
             // Non-leaf
             Expression::Operation { op, args } => {
-                let op = op.evaluate(scope)?;
-                let args = args.evaluate(scope)?;
-                op.compute(&args)
+                let op = op.evaluate(scope, errors);
+                let args = args.evaluate(scope, errors);
+                OPERATOR_TABLE.compute(&op, &args, errors)
             }
             Expression::Call { ident, args } => {
-                /*let arguments = arguments.evaluate(scope)?;
-                let identifier = identifier.evaluate(scope)?;
-                let func = scope.get_function(identifier)?;
-                func.call(arguments)*/
-                UnsupportedError{functionality: "function call not implemented"}.raise()
+                /* TODO */
+                errors.raise(UnsupportedError{functionality: "function call"});
+                Value::Failed
             }
             Expression::Array { arr, op } => {
-                /*let array = array.evaluate(scope)?;
-                let op = op.evaluate(scope)?;
-                op.compute(&arr)*/
-                UnsupportedError{functionality: "array not implemented"}.raise()
+                /* TODO */
+                errors.raise(UnsupportedError{functionality: "array"});
+                Value::Failed
             }
             Expression::Assignment { op, ident, value } => {
-                let value = value.evaluate(scope)?;
-                let ident = ident.evaluate(scope)?;
-                let op = op.evaluate(scope)?;
-                scope.assign_value(&ident, value, &op)?;
-                Ok(Value::Scalar(Box::new((Scalar::Empty, DEFAULT_UNIT))))
+                let value = value.evaluate(scope, errors);
+                let ident = ident.evaluate(scope, errors);
+                let op = op.evaluate(scope, errors);
+                scope.assign_value(&ident, value, &op, errors);
+                Value::Empty
             }
         }
     }
@@ -180,7 +185,7 @@ impl AstNode for Expression {
                 let mut result = Vec::new();
                 result.extend(Spanned::difference(format!("{}:op", prefix).as_str(), &a, &b));
                 result.extend(Spanned::difference(format!("{}:ident", prefix).as_str(), &a_ident, &b_ident));
-                result.extend(Spanned::difference(format!("{}:value", prefix).as_str(), &a, &b));
+                result.extend(Spanned::difference(format!("{}:value", prefix).as_str(), &a_value, &b_value));
                 result
             }
             _ => vec![format!("{}   - Type mismatch: {:?} != {:?}", prefix, a, b)],

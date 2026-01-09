@@ -10,7 +10,7 @@ use crate::ast::location::*;
 use crate::ast::ast_node::*;
 
 use crate::scope::*;
-use crate::scope::operator::*;
+use crate::operator::*;
 use crate::scope::value::*;
 
 extern {

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2025 Evan SERAY
 
+pub mod collector;
+
 use crate::ast::location::*;
 use crate::scope::*;
 
@@ -39,12 +41,14 @@ impl Error {
     pub fn get_message(&self) -> String {
         self.error_type.get_message(self.loc_range.clone())
     }
-    pub fn set_loc_range(&mut self, loc_range: RangeReverseLocation) {
-        self.loc_range = Some(loc_range);
+    pub fn set_loc_range(&mut self, loc_range: &RangeReverseLocation) {
+        if self.loc_range.is_none() {
+            self.loc_range = Some(loc_range.clone());
+        }
     }
 }
 
-pub fn set_loc_range<T>(result: &mut Result<T, Error>, loc_range: RangeReverseLocation) {
+pub fn set_loc_range<T>(result: &mut Result<T, Error>, loc_range: &RangeReverseLocation) {
     if let Err(error) = result {
         error.set_loc_range(loc_range);
     }
@@ -87,18 +91,34 @@ impl ErrorMessage for AssignmentError {
     }
 }
 
-pub struct UndifineError {
+pub struct UndefinedError {
     pub variable_name: String,
 }
 
-impl ErrorMessage for UndifineError {
+impl ErrorMessage for UndefinedError {
     fn raise<T>(self) -> Result<T, Error> {
         Err(Error::new(self))
     }
     fn name(&self) -> &'static str {
-        "UndifineError"
+        "UndefinedError"
     }
     fn description(&self) -> String {
         format!("The variable '{}' is not defined", self.variable_name)
+    }
+}
+
+pub struct UnfoundUnitError {
+    pub unit_name: String,
+}
+
+impl ErrorMessage for UnfoundUnitError {
+    fn raise<T>(self) -> Result<T, Error> {
+        Err(Error::new(self))
+    }
+    fn name(&self) -> &'static str {
+        "UnfoundUnitError"
+    }
+    fn description(&self) -> String {
+        format!("The unit '{}' is not found", self.unit_name)
     }
 }

@@ -3,69 +3,59 @@
 
 use crate::unit::*;
 
-use super::scalar::*;
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Vector {
-    value: Vec<Scalar>,
-    unit: UnitDimension,
+pub trait ValueTrait: Sized {
+    fn type_id() -> TypeId;
+    fn try_from_value(value: Value) -> Option<Self>;
+    fn into_value(self) -> Value;
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Matrix {
-    rows: usize,
-    columns: usize,
-    rows_indentifier: Option<String>,
-    rows_unit: Option<UnitDimension>,
-    data: Vec<Scalar>,
+pub struct Scalar {
+    pub value: f64,
+    pub unit: UnitDimension,
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct Array {
-    rows: usize,
-    columns: usize,
-    rows_indentifier: Option<String>,
-    rows_unit: Option<UnitDimension>,
-    data: Vec<Value>,
+impl ValueTrait for Scalar {
+    fn type_id() -> TypeId { TypeId::Scalar }
+    fn try_from_value(value: Value) -> Option<Self> {
+        match value {
+            Value::Scalar(scalar) => Some(scalar),
+            _ => None
+        }
+    }
+    fn into_value(self) -> Value {
+        Value::Scalar(self)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
-    Scalar(Box<(Scalar, Unit)>),
-    Array(Box<Array>),
-    Matrix(Box<Matrix>),
-    Vector(Box<Vector>),
-    String(Box<String>),
+    Scalar(Scalar),
+    Failed,
+    Empty,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum ValueCategory {
+pub enum TypeId {
     Scalar,
-    Array,
-    Matrix,
-    Vector,
-    String,
-    Bool,
+    Failed,
+    Empty,
 }
 
 impl Value {
-    pub fn get_type(&self) -> ValueCategory {
+    pub fn get_type(&self) -> TypeId {
         match self {
-            Value::Scalar(_) => ValueCategory::Scalar,
-            Value::Array(_) => ValueCategory::Array,
-            Value::Matrix(_) => ValueCategory::Matrix,
-            Value::Vector(_) => ValueCategory::Vector,
-            Value::String(_) => ValueCategory::String,
+            Value::Scalar(_) => TypeId::Scalar,
+            Value::Failed => TypeId::Failed,
+            Value::Empty => TypeId::Empty,
         }
     }
 
-    pub fn match_category(&self, value_category: ValueCategory) -> bool {
+    pub fn match_category(&self, value_category: TypeId) -> bool {
         match self {
-            Value::Scalar(_) => value_category == ValueCategory::Scalar,
-            Value::Array(_) => value_category == ValueCategory::Array,
-            Value::Matrix(_) => value_category == ValueCategory::Matrix,
-            Value::Vector(_) => value_category == ValueCategory::Vector,
-            Value::String(_) => value_category == ValueCategory::String,
+            Value::Scalar(_) => value_category == TypeId::Scalar,
+            Value::Failed => value_category == TypeId::Failed,
+            Value::Empty => value_category == TypeId::Empty,
         }
     }
 }

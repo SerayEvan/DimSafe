@@ -5,8 +5,8 @@ use std::fmt::{Display, Debug};
 use std::fmt;
 use std::cmp::{Eq, Ord, Ordering, PartialEq, PartialOrd};
 
-use crate::error::*;
 use crate::scope::*;
+use crate::error::collector::*;
 
 use super::ast_node::*;
 
@@ -151,10 +151,10 @@ impl<U: AstNode> AstNode for Spanned<U> {
         self.value.rev_location(block, lines_index);
     }
 
-    fn evaluate(&self, scope: &mut Scope) -> Result<U::Output, Error> {
-        let mut result = self.value.evaluate(scope);
+    fn evaluate(&self, scope: &mut Scope, errors: &mut ErrorCollector) -> U::Output {
+        let result = self.value.evaluate(scope, errors);
         if let Some(rev_loc_range) = self.rev_loc_range.clone() {
-            set_loc_range(&mut result, rev_loc_range);
+            errors.set_loc_range(&rev_loc_range);
         }
         result
     }

@@ -7,7 +7,7 @@ use logos::{Logos, SpannedIter};
 
 use crate::ast::*;
 use super::stylization::*;
-use super::scope::operator::*;
+use super::operator::*;
 use super::scope::*;
 
 fn parse_integer(input: &str, base: u32) -> LiteralValue {
@@ -95,7 +95,7 @@ pub fn parse_unit(input: &str) -> LiteralValue {
     let exponent = if split_idx == input.len() { 
         1.0
     } else {
-        input[split_idx..].parse::<i32>().unwrap() as f32
+        input[split_idx..].parse::<i32>().unwrap() as f64
     };
 
     LiteralValue::Unit(unit.to_string(), exponent)
@@ -151,7 +151,7 @@ pub enum Token {
     // literals value
 
     // integer
-    #[regex(r"[1-9][0-9]*", |lex| parse_integer(lex.slice(), 10))]
+    #[regex(r"[0-9]+", |lex| parse_integer(lex.slice(), 10))]
     #[regex(r"0x[0-9a-fA-F]+", |lex| parse_integer(&lex.slice()[2..], 16))]
     #[regex(r"0b[01]+", |lex| parse_integer(&lex.slice()[2..], 2))]
     #[regex(r"0o[0-7]+", |lex| parse_integer(&lex.slice()[2..], 8))]
@@ -164,9 +164,7 @@ pub enum Token {
     #[token("true", |_| LiteralValue::Bool(true))]
     #[token("false", |_| LiteralValue::Bool(false))]
     // meta
-    #[token("Invalid", |_| LiteralValue::Invalid)]
-    #[token("Unspecified", |_| LiteralValue::Unspecified)]
-    #[token("Unimplemented", |_| LiteralValue::Unimplemented)]
+    #[token("Failed", |_| LiteralValue::Failed)]
     #[token("Empty", |_| LiteralValue::Empty)]
     LiteralKeyword(LiteralValue),
 

@@ -9,7 +9,7 @@ use crate::ast::*;
 use crate::ast::location::*;
 use crate::ast::ast_node::*;
 use crate::scope::*;
-use crate::scope::operator::*;
+use crate::operator::*;
 
 #[component]
 fn TreeNode(children: Children) -> impl IntoView {
@@ -219,9 +219,7 @@ impl_shownable_enum!(LiteralValue {
     Bool ( value ),
     Unit ( unit, exponent ),
     Empty,
-    Unspecified,
-    Unimplemented,
-    Invalid,
+    Failed,
 });
 
 impl_shownable_enum!(Expression {

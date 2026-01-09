@@ -17,9 +17,8 @@ body {
     margin: 1px;
     padding: 1px;
     border-radius: 3px;
-    border: 1px solid rgba(96, 96, 98, 0.632);
-    border-right: none;
-    border-bottom: none;
+    border: none;
+    border-left: 1px solid rgba(96, 96, 98, 0.632);
     vertical-align: top;
     line-height: calc(1em + 2px);
     /*background: linear-gradient(to right, rgba(62, 62, 122, 0.632), transparent 50% );*/
