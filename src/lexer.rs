@@ -217,13 +217,6 @@ pub enum Token {
     #[regex(r#"[\p{XID_Start}_]\p{XID_Continue}*"#, |lex| lex.slice().to_string())]
     Identifier(String),
 
-    // Array constructor
-    #[token("Table[", |_| Operator::ConstructorTable)]
-    #[token("List[", |_| Operator::ConstructorList)]
-    #[token("Mat[", |_| Operator::ConstructorMatrix)]
-    #[token("Vec[", |_| Operator::ConstructorVector)]
-    ArrayConstructor(Operator),
-
     // Skip
     #[regex(r"[ \r\v\t\n\f]+", logos::skip)]
     #[regex(r#"/\*[^*]*\*+(?:[^/*][^*]*\*+)*/"#, logos::skip)]
@@ -247,7 +240,6 @@ impl Token {
             Token::VectorMultiplicativeOperator(_) => OPERATOR_BALISE,
             Token::BooleanOperator(_) => OPERATOR_BALISE,
             Token::ComparatorOperator(_) => OPERATOR_BALISE,
-            Token::ArrayConstructor(_) => STRUCTURAL_BALISE,
             Token::RawError => EMPTY_BALISE,
         }
     }

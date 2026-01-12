@@ -28,8 +28,4 @@ pub enum Operator {
     ComparatorIn,
     ComparatorHas,
     ComparatorIs,
-    ConstructorTable,
-    ConstructorList,
-    ConstructorMatrix,
-    ConstructorVector,
 }

@@ -3,18 +3,21 @@
 
 use std::fmt::Debug;
 
-use crate::error::*;
-use crate::scope::value::*;
+use crate::error::collector::*;
+use crate::value::*;
 
 #[derive(Debug, Clone)]
 pub struct OperatorImplementation {
     inputs_type: Vec<TypeId>,
-    output_type: Option<TypeId>,
     symmetric: bool,
-    pub implementation: fn(&[Value]) -> Result<Value, Error>,
+    pub implementation: fn(&[Value], &mut ErrorCollector) -> Value,
 }
 
 impl OperatorImplementation {
+
+    pub fn new(inputs_type: Vec<TypeId>, symmetric: bool, implementation: fn(&[Value], &mut ErrorCollector) -> Value) -> Self {
+        Self { inputs_type, symmetric, implementation }
+    }
 
     pub fn matches(&self, inputs: &[Value]) -> bool {
         let inputs_type: Vec<TypeId> = inputs.iter().map(|input| input.get_type()).collect();

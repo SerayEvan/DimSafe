@@ -1,5 +1,6 @@
 # DimSafe
 
+
 High-level overview of DimSafe, a Rust-based dimensioning calculator software with parsing and AST support.
 
 ## Table of Contents

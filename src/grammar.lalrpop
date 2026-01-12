@@ -11,7 +11,7 @@ use crate::ast::ast_node::*;
 
 use crate::scope::*;
 use crate::operator::*;
-use crate::scope::value::*;
+use crate::value::*;
 
 extern {
   type Location = usize;
@@ -45,7 +45,6 @@ extern {
     "comp_op" => Token::ComparatorOperator(<Operator>),
     "power_op" => Token::PowerOperator(<Operator>),
     "assign_op" => Token::AssignmentOperator(<AssignmentOperator>),
-    "array_constructor" => Token::ArrayConstructor(<Operator>),
   }
 }
 
@@ -77,7 +76,7 @@ ArrayLevel1: Vec<Spanned<Vec<Spanned<Expression>>>> = {
 };
 
 Array: Expression = {
-  <op: Locate<Leaf<"array_constructor">>> <arr: Locate<ArrayLevel1?>> "]" => Expression::Array{arr: arr.map(|arr| arr.unwrap_or(vec![])), op: op},
+  "[" <arr: Locate<ArrayLevel1?>> "]" => Expression::Array{arr: arr.map(|arr| arr.unwrap_or(vec![]))},
 };
 
 Value: Expression = {

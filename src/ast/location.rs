@@ -97,18 +97,6 @@ pub struct RangeReverseLocation {
     end: ReverseLocation,
 }
 
-impl RangeReverseLocation {
-    pub fn new(start: ReverseLocation, end: ReverseLocation) -> Self {
-        Self { start, end }
-    }
-    pub fn bounding_range(self, other: Self) -> Self {
-        Self {
-            start: self.start.min(other.start),
-            end: self.end.max(other.end),
-        }
-    }
-}
-
 impl Display for RangeReverseLocation {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}..{}", self.start, self.end)

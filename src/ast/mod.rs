@@ -5,12 +5,11 @@ pub mod location;
 pub mod ast_node;
 
 use crate::ast::ast_node::*;
-use crate::scope::value::Scalar;
+use crate::value::scalar::*;
 use crate::scope::*;
-use crate::scope::value::*;
+use crate::value::*;
 use crate::scope::unit::*;
 use crate::operator::*;
-use crate::operator::table::*;
 use crate::error::*;
 use crate::error::collector::*;
 
@@ -73,21 +72,16 @@ pub enum Expression {
 
     // Non-leaf
     Operation       {
-        op:            Spanned<Leaf<Operator>>,
-        args:           Vec<Spanned<Expression>>,
-    },
-    Call            {
-        ident:          Spanned<Leaf<Identifier>>,
-        args:           Vec<Spanned<Expression>>,
+        op:   Spanned<Leaf<Operator>>,
+        args: Vec<Spanned<Expression>>,
     },
     Array           {
-        arr:               Spanned<Vec<Spanned<Vec<Spanned<Expression>>>>>,
-        op:         Spanned<Leaf<Operator>>,
+        arr: Spanned<Vec<Spanned<Vec<Spanned<Expression>>>>>,
     },
     Assignment      {
-        op: Spanned<Leaf<AssignmentOperator>>,
-        ident:          Spanned<Leaf<Identifier>>,
-        value:               Box<Spanned<Expression>>,
+        op:    Spanned<Leaf<AssignmentOperator>>,
+        ident: Spanned<Leaf<Identifier>>,
+        value: Box<Spanned<Expression>>,
     },
 }
 
@@ -106,13 +100,8 @@ impl AstNode for Expression {
                 op.rev_location(block, lines_index);
                 args.rev_location(block, lines_index);
             }
-            Expression::Call { ident, args } => {
-                ident.rev_location(block, lines_index);
-                args.rev_location(block, lines_index);
-            }
-            Expression::Array { arr, op } => {
+            Expression::Array { arr } => {
                 arr.rev_location(block, lines_index);
-                op.rev_location(block, lines_index);
             }
             Expression::Assignment { op, ident, value } => {
                 op.rev_location(block, lines_index);
@@ -138,12 +127,7 @@ impl AstNode for Expression {
                 let args = args.evaluate(scope, errors);
                 OPERATOR_TABLE.compute(&op, &args, errors)
             }
-            Expression::Call { ident, args } => {
-                /* TODO */
-                errors.raise(UnsupportedError{functionality: "function call"});
-                Value::Failed
-            }
-            Expression::Array { arr, op } => {
+            Expression::Array { arr } => {
                 /* TODO */
                 errors.raise(UnsupportedError{functionality: "array"});
                 Value::Failed
@@ -169,16 +153,9 @@ impl AstNode for Expression {
                 result.extend(Vec::difference(format!("{}:arguments", prefix).as_str(), &a_args, &b_args));
                 result
             }
-            (Expression::Call { ident: a, args: a_args }, Expression::Call { ident: b, args: b_args }) => {
-                let mut result = Vec::new();
-                result.extend(Spanned::difference(format!("{}:identifier", prefix).as_str(), &a, &b));
-                result.extend(Vec::difference(format!("{}:arguments", prefix).as_str(), &a_args, &b_args));
-                result
-            }
-            (Expression::Array { arr: a, op: a_op }, Expression::Array { arr: b, op: b_op }) => {
+            (Expression::Array { arr: a }, Expression::Array { arr: b }) => {
                 let mut result = Vec::new();
                 result.extend(Spanned::difference(format!("{}:array", prefix).as_str(), &a, &b));
-                result.extend(Spanned::difference(format!("{}:op", prefix).as_str(), &a_op, &b_op));
                 result
             }
             (Expression::Assignment { op: a, ident: a_ident, value: a_value }, Expression::Assignment { op: b, ident: b_ident, value: b_value }) => {

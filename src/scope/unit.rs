@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2025 Evan SERAY
 
+use std::fmt;
+use std::fmt::Display;
 use std::ops::{Mul, Div, Add, Sub};
 use std::cmp::{PartialEq};
 use std::collections::HashMap;
 use lazy_static::lazy_static;
+
+use crate::error::collector::*;
+use crate::error::*;
 
 const NUMBER_OF_UNITS: usize = 7;
 
@@ -32,10 +37,43 @@ impl UnitDimension {
         dim[index] = 1.0;
         Self::Define(dim)
     }
+    pub fn verify(a: &Self, b: &Self, errors: &mut ErrorCollector) -> bool {
+        match (a, b) {
+            (Self::Define(dim1), Self::Define(dim2)) => {
+                for i in 0..NUMBER_OF_UNITS {
+                    if dim1[i] != dim2[i] {
+                        errors.raise(DimensionMismatchError{unit_a: *a, unit_b: *b});
+                        return false;
+                    }
+                }
+                true
+            }
+            _ => true,
+        }
+    }
     fn is_error(&self) -> bool {
         match self {
             Self::Error => true,
             _ => false,
+        }
+    }
+}
+impl Display for UnitDimension {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Define(dim) => {
+                const DIMENSION_NAMES: [&str; NUMBER_OF_UNITS] = ["L", "M", "T", "I", "Θ", "N", "J"];
+                write!(f, "[[")?;
+                for i in 0..NUMBER_OF_UNITS {
+                    if dim[i] != 0.0 {
+                        write!(f, " {}{}", DIMENSION_NAMES[i], dim[i])?;
+                    }
+                }
+                write!(f, "]]")?;
+                Ok(())
+            }
+            Self::Error => write!(f, "Error"),
+            Self::Unmonitor => write!(f, "Unmonitor"),
         }
     }
 }

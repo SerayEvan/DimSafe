@@ -206,10 +206,6 @@ impl_shownable_enum!(Operator {
     ComparatorIn,
     ComparatorHas,
     ComparatorIs,
-    ConstructorTable,
-    ConstructorList,
-    ConstructorMatrix,
-    ConstructorVector,
 });
 
 impl_shownable_enum!(LiteralValue {
@@ -230,7 +226,6 @@ impl_shownable_enum!(Expression {
 
     // Non-leaf
     Operation  { op, args },
-    Call       { ident, args },
-    Array      { arr, op },
+    Array      { arr },
     Assignment { op, ident, value },
 });

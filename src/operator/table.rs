@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 use crate::error::*;
 use crate::error::collector::*;
-use crate::scope::value::*;
+use crate::value::*;
 use super::implementation::*;
 use super::*;
 
@@ -43,13 +43,7 @@ impl OperatorTable {
         if let Some(implementations) = self.implementations.get(operator) {
             for implementation in implementations.iter() {
                 if implementation.matches(inputs) {
-                    match (implementation.implementation)(inputs) {
-                        Ok(result) => return result,
-                        Err(error) => {
-                            errors.add_error(error);
-                            return Value::Failed;
-                        }
-                    }
+                    return (implementation.implementation)(inputs, errors);
                 }
             }
         }
@@ -58,9 +52,5 @@ impl OperatorTable {
         errors.raise(UnsupportedError{functionality: "operator for given inputs"});
         Value::Failed
     }
-}
-
-lazy_static! {
-    pub static ref OPERATOR_TABLE: OperatorTable = OperatorTable::new();
 }
 

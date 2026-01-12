@@ -13,6 +13,7 @@ mod interperter;
 mod scope;
 mod error;
 mod operator;
+mod value;
 
 use wasm_bindgen::prelude::*;
 use leptos::prelude::*;

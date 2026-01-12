@@ -5,6 +5,7 @@ pub mod collector;
 
 use crate::ast::location::*;
 use crate::scope::*;
+use crate::scope::unit::*;
 
 pub trait ErrorMessage {
     fn raise<T>(self) -> Result<T, Error>;
@@ -120,5 +121,38 @@ impl ErrorMessage for UnfoundUnitError {
     }
     fn description(&self) -> String {
         format!("The unit '{}' is not found", self.unit_name)
+    }
+}
+
+pub struct DimensionMismatchError {
+    pub unit_a: UnitDimension,
+    pub unit_b: UnitDimension,
+}
+
+impl ErrorMessage for DimensionMismatchError {
+    fn raise<T>(self) -> Result<T, Error> {
+        Err(Error::new(self))
+    }
+    fn name(&self) -> &'static str {
+        "DimensionMismatchError"
+    }
+    fn description(&self) -> String {
+        format!("The units '{}' and '{}' do not match", self.unit_a, self.unit_b)
+    }
+}
+
+pub struct InvalidInputError {
+    pub message: String,
+}
+
+impl ErrorMessage for InvalidInputError {
+    fn raise<T>(self) -> Result<T, Error> {
+        Err(Error::new(self))
+    }
+    fn name(&self) -> &'static str {
+        "InvalidInputError"
+    }
+    fn description(&self) -> String {
+        format!("'{}'", self.message)
     }
 }
