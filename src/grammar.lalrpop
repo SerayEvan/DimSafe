@@ -36,6 +36,7 @@ extern {
     "," => Token::StructuralToken(StructuralToken::Comma),
     ";" => Token::StructuralToken(StructuralToken::Semicolon),
     "." => Token::StructuralToken(StructuralToken::Dot),
+    "%" => Token::StructuralToken(StructuralToken::Percent),
 
     "+" => Token::AdditiveOperator(<Operator>),
     "-" => Token::SubtractiveOperator(<Operator>),
@@ -144,6 +145,13 @@ Expression: Expression = {
   },
 
   #[precedence(level="10")] #[assoc(side="left")]
+  <e: Locate<Expression>> <op: Locate<Leaf<"%">>> <r: Locate<Expression>?> => Expression::Shown{
+    expr: Box::new(e),
+    op: op.map(|_| ()),
+    divider: r.map(|r| Box::new(r)),
+  },
+
+  #[precedence(level="11")] #[assoc(side="left")]
   <l: Locate<Identifier>> <op: Locate<Leaf<"assign_op">>> <r: Locate<Expression>> => Expression::Assignment{
     ident: l,
     op: op,

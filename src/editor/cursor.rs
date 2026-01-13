@@ -1,20 +1,13 @@
-// SPDX-License-Identifier: Apache-2.0
-// Copyright 2025 Evan SERAY
-
 use leptos::prelude::*;
 use wasm_bindgen::JsCast;
-use web_sys::{Window, Element, Node, HtmlElement};
-use leptos::html;
-use log::info;
+use web_sys::{Window, Element, Node};
 
-use crate::lexer::*;
-use crate::stylization::*;
-use crate::shownable::*;
+use super::stylization::*;
 
 const CURSOR_BEGIN_MARKER: &str = "\u{e001}";
 const CURSOR_END_MARKER: &str = "\u{e002}";
 
-struct CursorState {
+pub struct CursorState {
     cursor: Vec<[usize; 2]>,
 }
 
@@ -50,7 +43,7 @@ fn insert_marker(parent_node: &Node, offset: u32, marker: &str) {
 
 impl CursorState {
 
-    fn insert_marker() {
+    pub fn insert_marker() {
 
         let window = window();
         
@@ -73,7 +66,7 @@ impl CursorState {
         }
     }
 
-    fn retrieve_cursor(text: &str) -> (CursorState, String) {
+    pub fn retrieve_cursor(text: &str) -> (CursorState, String) {
         // retrieve cursor position from string and remove markers
         let mut cursor_state = CursorState{cursor: vec![]};
         let mut new_string = String::new();
@@ -101,7 +94,7 @@ impl CursorState {
         (cursor_state, new_string)
     }
 
-    fn place_cursor_balise(&self, stylization: &mut Stylization) {
+    pub fn place_cursor_balise(&self, stylization: &mut Stylization) {
         for cursor in &self.cursor {
             let [cursor_begin, cursor_end] = *cursor;
             stylization.insert_balise(CURSOR_BEGIN, (cursor_begin, cursor_begin + 1));
@@ -109,7 +102,7 @@ impl CursorState {
         }
     }
 
-    fn set_cursor(window: Window) {
+    pub fn restore_cursor(window: Window) {
 
         // catch node cursor begin and cursor end
         let document = window.document().expect("Cannot get document");
@@ -152,105 +145,6 @@ impl CursorState {
                 let _ = elt.class_list().remove_1("cursor_end");
             }
         }
-    }
-}
-
-#[component]
-pub fn CodeInput(
-    //cx: Scope,
-    #[prop(into)] input_text: RwSignal<String>,
-    #[prop(into)] ast_signal: RwSignal<impl Shownable + Clone>,
-    #[prop(into)] on_change: Callback<String>,
-    #[prop(into)] on_run: Callback<String>,
-) -> impl IntoView {
-
-    let input_node_ref = NodeRef::<html::Div>::new();
-
-    Effect::new(move |_| {
-
-        // get cursor state
-        let window = window();
-
-        // retrieve cursor state and text
-        let brute_text_with_cursor_marker = input_text.get();
-        let (cursor_state, brute_text) = CursorState::retrieve_cursor(&brute_text_with_cursor_marker);
-
-        // lexer text
-        let lexer = Lexer::new(&brute_text);
-
-        // apply cursor balise
-        let mut style_effect = Stylization::new();
-        cursor_state.place_cursor_balise(&mut style_effect);
-        lexer.stylize(&mut style_effect);
-
-        // process text style
-        let style_text = style_effect.apply_to_text(&brute_text);
-
-        // set innerhtml of python-input to value.get()
-        if let Some(node) = input_node_ref.get() {
-            node.set_inner_html(&style_text);
-        }
-
-        // replace cursor at original position
-        CursorState::set_cursor(window);
-    });
-
-    let on_run_click = move |_| {
-        let text = input_text.get_untracked();
-        let text = CursorState::retrieve_cursor(&text).1;
-        info!("text: {}", text);
-        on_run.run(text);
-    };
-
-    view! {
-        <div>
-            <div
-                node_ref=input_node_ref
-                class="input"
-                contenteditable="true"
-                data-absolute-text-position=0
-                on:input=move |ev| {
-
-                    if let Some(target) = ev.target() {
-                        if let Ok(element) = target.dyn_into::<HtmlElement>() {
-                            CursorState::insert_marker();
-                            let text_content = element.text_content().unwrap_or_default();
-                            on_change.run(text_content);
-                        }
-                    }
-                }
-                on:keydown=move |ev| {
-                    if ev.key() == "Enter" {
-                        ev.prevent_default(); // prevent <div> or <p>
-                        let selection = window().get_selection().expect("Cannot get selection").expect("No selection available");
-                        let range = selection.get_range_at(0).expect("Cannot get range");
-                    
-                        // Insert a text node containing a line break
-                        let br = document().create_text_node("\n");
-                        let _ = range.insert_node(&br);
-                    
-                        // Move cursor after the \n
-                        let _ = range.set_start_after(&br);
-                        let _ = range.set_end_after(&br);
-                        let _ = selection.remove_all_ranges();
-                        let _ = selection.add_range(&range);
-                    }
-
-                    if let Some(target) = ev.target() {
-                        if let Ok(element) = target.dyn_into::<HtmlElement>() {
-                            CursorState::insert_marker();
-                            let text_content = element.text_content().unwrap_or_default();
-                            on_change.run(text_content);
-                        }
-                    }
-                }
-                spellcheck="false"
-            />
-            <button on:click=on_run_click>"Run"</button>
-            <div class="output">
-                {move || ast_signal.read().clone().display()}
-            </div>
-        </div>
     }
 }
 

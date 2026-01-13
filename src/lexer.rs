@@ -6,17 +6,19 @@ use std::fmt;
 use logos::{Logos, SpannedIter};
 
 use crate::ast::*;
-use super::stylization::*;
+use crate::editor::stylization::*;
 use super::operator::*;
 use super::scope::*;
 
 fn parse_integer(input: &str, base: u32) -> LiteralValue {
+    // TODO: manage overflow
     LiteralValue::Integer(
         i64::from_str_radix(input, base).unwrap()
     )
 }
 
 fn parse_float(input: &str) -> LiteralValue {
+    // TODO: manage overflow
     LiteralValue::Float(
         input.parse::<f64>().unwrap()
     )
@@ -95,7 +97,7 @@ pub fn parse_unit(input: &str) -> LiteralValue {
     let exponent = if split_idx == input.len() { 
         1.0
     } else {
-        input[split_idx..].parse::<i32>().unwrap() as f64
+        input[split_idx..].parse::<i32>().unwrap_or(1) as f64
     };
 
     LiteralValue::Unit(unit.to_string(), exponent)
@@ -120,6 +122,7 @@ pub enum StructuralToken {
     Semicolon,
     Dot,
     Dollar,
+    Percent,
 }
 
 #[derive(Logos, Debug, PartialEq, Clone)]
@@ -140,6 +143,7 @@ pub enum Token {
     #[token(";", |_| StructuralToken::Semicolon)]
     #[token(".", |_| StructuralToken::Dot)]
     #[token("$", |_| StructuralToken::Dollar)]
+    #[token("%", |_| StructuralToken::Percent)]
     StructuralToken(StructuralToken),
 
     // Assignment operator

@@ -12,7 +12,7 @@ use crate::scope::unit::*;
 use crate::operator::*;
 use crate::error::*;
 use crate::error::collector::*;
-
+use crate::scope::output::*;
 use super::ast::location::*;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -28,7 +28,7 @@ pub enum LiteralValue {
 impl AstNode for LiteralValue {
     type Output = Value;
     fn rev_location(&mut self, _block: usize, _lines_index: &[usize]) {}
-    fn evaluate(&self, _scope: &mut Scope, errors: &mut ErrorCollector) -> Value {
+    fn evaluate(&self, _scope: &mut Scope, errors: &mut ErrorCollector, _output: &mut OutputCollector) -> Value {
         match self {
             LiteralValue::Integer(integer)  => Value::Scalar(Scalar{ value: *integer as f64, unit: NO_DIMENSION }),
             LiteralValue::Float(float)      => Value::Scalar(Scalar{ value: *float, unit: NO_DIMENSION }),
@@ -83,6 +83,11 @@ pub enum Expression {
         ident: Spanned<Leaf<Identifier>>,
         value: Box<Spanned<Expression>>,
     },
+    Shown          {
+        expr: Box<Spanned<Expression>>,
+        op:   Spanned<()>,
+        divider: Option<Box<Spanned<Expression>>>,
+    },
 }
 
 impl AstNode for Expression {
@@ -108,23 +113,30 @@ impl AstNode for Expression {
                 ident.rev_location(block, lines_index);
                 value.rev_location(block, lines_index);
             }
+            Expression::Shown { expr, op, divider } => {
+                expr.rev_location(block, lines_index);
+                op.rev_location(block, lines_index);
+                if let Some(divider) = divider {
+                    divider.rev_location(block, lines_index);
+                }
+            }
         }
     }
     
-    fn evaluate(&self, scope: &mut Scope, errors: &mut ErrorCollector) -> Value {
+    fn evaluate(&self, scope: &mut Scope, errors: &mut ErrorCollector, output: &mut OutputCollector) -> Value {
         match self {
 
             // Leaf
-            Expression::Literal(value) => value.evaluate(scope, errors),
+            Expression::Literal(value) => value.evaluate(scope, errors, output),
             Expression::Identifier(identifier) => { 
-                let identifier = identifier.evaluate(scope, errors);
+                let identifier = identifier.evaluate(scope, errors, output);
                 scope.get_value(&identifier, errors) 
             },
 
             // Non-leaf
             Expression::Operation { op, args } => {
-                let op = op.evaluate(scope, errors);
-                let args = args.evaluate(scope, errors);
+                let op = op.evaluate(scope, errors, output);
+                let args = args.evaluate(scope, errors, output);
                 OPERATOR_TABLE.compute(&op, &args, errors)
             }
             Expression::Array { arr } => {
@@ -133,11 +145,19 @@ impl AstNode for Expression {
                 Value::Failed
             }
             Expression::Assignment { op, ident, value } => {
-                let value = value.evaluate(scope, errors);
-                let ident = ident.evaluate(scope, errors);
-                let op = op.evaluate(scope, errors);
+                let value = value.evaluate(scope, errors, output);
+                let ident = ident.evaluate(scope, errors, output);
+                let op = op.evaluate(scope, errors, output);
                 scope.assign_value(&ident, value, &op, errors);
                 Value::Empty
+            }
+            Expression::Shown { expr, op, divider } => {
+                let value = expr.evaluate(scope, errors, output);
+                let divider = divider.as_ref().map(|divider| divider.evaluate(scope, errors, output));
+                let divider = divider.unwrap_or(Value::Scalar(Scalar{value: 1.0, unit: NO_DIMENSION}));
+                let result = OPERATOR_TABLE.compute(&Operator::Shown, &[value.clone(), divider], errors);
+                output.add(op.loc_range.end.clone(), format!("{}", result));
+                value
             }
         }
     }
@@ -163,6 +183,24 @@ impl AstNode for Expression {
                 result.extend(Spanned::difference(format!("{}:op", prefix).as_str(), &a, &b));
                 result.extend(Spanned::difference(format!("{}:ident", prefix).as_str(), &a_ident, &b_ident));
                 result.extend(Spanned::difference(format!("{}:value", prefix).as_str(), &a_value, &b_value));
+                result
+            }
+            (Expression::Shown { expr: a, op: a_op, divider: a_divider }, Expression::Shown { expr: b, op: b_op, divider: b_divider }) => {
+                let mut result = Vec::new();
+                result.extend(Spanned::difference(format!("{}:expr", prefix).as_str(), &a, &b));
+                result.extend(Spanned::difference(format!("{}:op", prefix).as_str(), &a_op, &b_op));
+                match (a_divider, b_divider) {
+                    (Some(a_divider), Some(b_divider)) => {
+                        result.extend(Spanned::difference(format!("{}:divider", prefix).as_str(), &a_divider, &b_divider));
+                    }
+                    (Some(_), None) => {
+                        result.push(format!("{}   - Divider mismatch: {:?} != {:?}", prefix, a_divider, b_divider));
+                    }
+                    (None, Some(_)) => {
+                        result.push(format!("{}   - Divider mismatch: {:?} != {:?}", prefix, a_divider, b_divider));
+                    }
+                    (None, None) => {}
+                }
                 result
             }
             _ => vec![format!("{}   - Type mismatch: {:?} != {:?}", prefix, a, b)],

@@ -7,18 +7,18 @@ use std::cmp::{Eq, Ord, Ordering, PartialEq, PartialOrd};
 
 use crate::scope::*;
 use crate::error::collector::*;
-
+use crate::scope::output::*;
 use super::ast_node::*;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct LocationIndex {
-    index: usize,
+    pub index: usize,
 }
 
 #[derive(Clone, PartialEq)]
 pub struct RangeIndex {
-    start: LocationIndex,
-    end: LocationIndex,
+    pub start: LocationIndex,
+    pub end: LocationIndex,
 }
 
 impl RangeIndex {
@@ -93,8 +93,8 @@ impl Display for ReverseLocation {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct RangeReverseLocation {
-    start: ReverseLocation,
-    end: ReverseLocation,
+    pub start: ReverseLocation,
+    pub end: ReverseLocation,
 }
 
 impl Display for RangeReverseLocation {
@@ -139,8 +139,8 @@ impl<U: AstNode> AstNode for Spanned<U> {
         self.value.rev_location(block, lines_index);
     }
 
-    fn evaluate(&self, scope: &mut Scope, errors: &mut ErrorCollector) -> U::Output {
-        let result = self.value.evaluate(scope, errors);
+    fn evaluate(&self, scope: &mut Scope, errors: &mut ErrorCollector, output: &mut OutputCollector) -> U::Output {
+        let result = self.value.evaluate(scope, errors, output);
         if let Some(rev_loc_range) = self.rev_loc_range.clone() {
             errors.set_loc_range(&rev_loc_range);
         }

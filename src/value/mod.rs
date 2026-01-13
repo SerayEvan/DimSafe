@@ -6,6 +6,8 @@ pub mod scalar;
 use super::value::scalar::*;
 use crate::operator::table::*;
 use lazy_static::lazy_static;
+use std::fmt;
+use std::fmt::Display;
 
 pub trait ValueTrait: Sized {
     fn type_id() -> TypeId;
@@ -41,6 +43,16 @@ impl Value {
             Value::Scalar(_) => value_category == TypeId::Scalar,
             Value::Failed => value_category == TypeId::Failed,
             Value::Empty => value_category == TypeId::Empty,
+        }
+    }
+}
+
+impl Display for Value {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Value::Scalar(scalar) => write!(f, "{}", scalar),
+            Value::Failed => write!(f, "Failed"),
+            Value::Empty => write!(f, "Empty"),
         }
     }
 }

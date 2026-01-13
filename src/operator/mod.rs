@@ -28,4 +28,5 @@ pub enum Operator {
     ComparatorIn,
     ComparatorHas,
     ComparatorIs,
+    Shown,
 }

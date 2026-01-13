@@ -2,13 +2,10 @@
 // Copyright 2025 Evan SERAY
 
 mod storage;
-mod derive_rw;
-mod input;
-mod stylization;
+mod editor;
 mod ast;
 mod lexer;
 mod parser;
-mod shownable;
 mod interperter;
 mod scope;
 mod error;
@@ -23,10 +20,11 @@ use log::Level;
 use log::info;
 
 use storage::*;
-use input::*;
+use editor::input::*;
 use parser::*;
 use scope::*;
 use error::collector::*;
+use scope::output::*;
 use ast::ast_node::*;
 
 #[wasm_bindgen(start)]
@@ -39,7 +37,7 @@ pub fn start() -> Result<(), JsValue> {
     mount_to_body(|| {
 
         let signal = local_storage_signal("value".to_string(), Some("".to_string())).unwrap();
-        let ast_signal = RwSignal::new(None);
+        let output_signal = RwSignal::new(OutputCollector::new());
         let on_change = Callback::new(move |value: String| {
             signal.set(value);
         });
@@ -48,12 +46,10 @@ pub fn start() -> Result<(), JsValue> {
             if let Ok(program) = program {
                 let mut scope = Scope::new();
                 let mut errors = ErrorCollector::new();
-                let result = program.evaluate(&mut scope, &mut errors);
+                let mut output = OutputCollector::new();
+                let _result = program.evaluate(&mut scope, &mut errors, &mut output);
                 info!("{}", errors.into_string());
-                ast_signal.set(Some(program));
-            }
-            else {
-                ast_signal.set(None);
+                output_signal.set(output);
             }
         });
 
@@ -61,7 +57,7 @@ pub fn start() -> Result<(), JsValue> {
             <div>
                 <h1>"SmartCalc"</h1>
             </div>
-            <CodeInput input_text=signal ast_signal=ast_signal on_change=on_change on_run=on_run />
+            <CodeInput input_text=signal output_signal=output_signal on_change=on_change on_run=on_run />
             <footer>
                 <p>"© 2025 Evan SERAY — Tous droits réservés"</p>
             </footer>
