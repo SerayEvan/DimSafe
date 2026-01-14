@@ -43,7 +43,7 @@ fn stylize_text<T: Fn(&str, &mut Stylization, GhostReversePlacement) -> ()>(node
     let modified_text = stylization.apply_to_text(&brute_text);
 
     // set innerhtml of node_ref to modified_text
-    node.set_inner_html(&modified_text);
+    node.set_inner_html(&modified_text.to_html());
 
     // replace cursor at original position
     let window = window();
@@ -59,6 +59,7 @@ pub fn CodeInput(
 ) -> impl IntoView {
 
     let input_node_ref = NodeRef::<html::Div>::new();
+    let output_overlays_node_ref = NodeRef::<html::Div>::new();
 
     Effect::new(move |_| {
 
@@ -66,6 +67,7 @@ pub fn CodeInput(
         let text = input_text.get();
         let output = output_signal.get();
         let node = input_node_ref.get().expect("Node ref is not a div or not found");
+        let output_overlays_node = output_overlays_node_ref.get().expect("Node ref is not a div or not found");
 
         // verify if text is placed to avoid cursor disruption
         let current_text = node.text_content().unwrap_or_default();
@@ -79,12 +81,18 @@ pub fn CodeInput(
             let lexer = Lexer::new(text);
             lexer.stylize(stylization);
 
-            if !output.is_placed() {
-                output_signal.update(|output| output.apply_on_stylization(stylization));
+            let ghost_placement = if output.is_placed {
+                previous_ghost_placement
             } else {
-                previous_ghost_placement.restore_ghost_overlay(stylization);
-            }
+                output_signal.update(|output| output.is_placed = true);
+                GhostReversePlacement::from_output(&output_signal.get())
+            };
+
+            ghost_placement.restore_ghost_overlay(stylization);
         });
+
+        // display output overlays
+        display_output_overlays(output, output_overlays_node, node);
     });
 
     let on_run_click = move |_| {
@@ -137,6 +145,8 @@ pub fn CodeInput(
                 spellcheck="false"
             />
             <button on:click=on_run_click>"Run"</button>
+        </div>
+        <div node_ref=output_overlays_node_ref>
         </div>
     }
 }

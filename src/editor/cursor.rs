@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2025 Evan SERAY
+
 use leptos::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::{Window, Element, Node};

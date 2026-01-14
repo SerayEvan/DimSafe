@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2025 Evan SERAY
 
+use leptos::prelude::*;
+
 use std::collections::BTreeMap;
 use std::ops::Bound;
 use std::cmp::min;
@@ -130,9 +132,9 @@ impl Stylization {
         }
     }
 
-    pub fn apply_to_text(&self, text: &str) -> String {
-        
-        let mut new_text = String::new();
+    pub fn apply_to_text(&self, text: &str) -> impl IntoView {
+
+        let mut view_collection = Vec::new();
 
         let mut markers_it = self.markers.iter().peekable();
         
@@ -157,20 +159,23 @@ impl Stylization {
 
             // add ghost overlay to new text
             for ghost_overlay in marker.ghost_overlays.iter() {
-                new_text.push_str(&format!(
-                    "<span class=\"ghost_overlay\" id=\"ghost_overlay_{}\"></span>", 
-                    ghost_overlay.index,
-                ));
+                view_collection.push(view! {
+                    <span 
+                        class=format!("ghost_overlay ghost_overlay_{}", ghost_overlay.index)
+                        style:display="inline-block"
+                        style:height="1lh"
+                    ></span>
+                }.into_any());
             }
 
             // add section to new text with balise class
-            new_text.push_str(&format!(
-                "<span class=\"{}\">{}</span>", 
-                get_balise_class(marker.balise),
-                &text[start_byte..end_byte]
-            ));  
+            view_collection.push(view! {
+                <span class={get_balise_class(marker.balise)}>
+                    {&text[start_byte..end_byte]}
+                </span>
+            }.into_any());
         }
-        new_text
+        view_collection
     }
 }
 
@@ -198,7 +203,7 @@ mod tests {
         stylization.insert_balise(LITERAL_NUMERICAL_BALISE, (4, 6));
 
         // apply text style
-        let style_text = stylization.apply_to_text(&test_text);
+        let style_text = stylization.apply_to_text(&test_text).to_html();
 
         // assert style text
         assert_eq!(style_text, "\
@@ -225,13 +230,13 @@ mod tests {
         stylization.insert_ghost_overlay(4, ghost_overlay_1);
 
         // apply text style
-        let style_text = stylization.apply_to_text(&test_text);
+        let style_text = stylization.apply_to_text(&test_text).to_html();
 
         // assert style text
         assert_eq!(style_text, "\
         <span class=\"\">Un p</span>\
-        <span class=\"ghost_overlay\" id=\"ghost_overlay_0\"></span>\
-        <span class=\"ghost_overlay\" id=\"ghost_overlay_1\"></span>\
+        <span class=\"ghost_overlay ghost_overlay_0\" style=\"display:inline-block;\"></span>\
+        <span class=\"ghost_overlay ghost_overlay_1\" style=\"display:inline-block;\"></span>\
         <span class=\"\">eu de texte</span>");
 
     }
