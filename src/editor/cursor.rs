@@ -7,8 +7,8 @@ use web_sys::{Window, Element, Node};
 
 use super::stylization::*;
 
-const CURSOR_BEGIN_MARKER: &str = "\u{e001}";
-const CURSOR_END_MARKER: &str = "\u{e002}";
+pub const CURSOR_BEGIN_MARKER: char = '\u{e001}';
+pub const CURSOR_END_MARKER: char = '\u{e002}';
 
 pub struct CursorState {
     cursor: Vec<[usize; 2]>,
@@ -64,8 +64,8 @@ impl CursorState {
             let start_offset = range.start_offset().expect("Cannot get start offset");
             let end_node = range.end_container().expect("Cannot get end container");
             let end_offset = range.end_offset().expect("Cannot get end offset");
-            insert_marker(&end_node, end_offset, CURSOR_END_MARKER);
-            insert_marker(&start_node, start_offset, CURSOR_BEGIN_MARKER);
+            insert_marker(&end_node, end_offset, &CURSOR_END_MARKER.to_string());
+            insert_marker(&start_node, start_offset, &CURSOR_BEGIN_MARKER.to_string());
         }
     }
 
@@ -81,14 +81,14 @@ impl CursorState {
             if start_index.is_none() { break; }
             let start_index = start_index.unwrap() + new_string.len();
             new_string += &text[last_cut_index..start_index+remove_counter];
-            remove_counter += CURSOR_BEGIN_MARKER.len();
+            remove_counter += CURSOR_BEGIN_MARKER.to_string().len();
             last_cut_index = start_index+remove_counter;
 
             let end_index = text[new_string.len() + remove_counter..].find(CURSOR_END_MARKER);
             if end_index.is_none() { break; }
             let end_index = end_index.unwrap() + new_string.len();
             new_string += &text[last_cut_index..end_index+remove_counter];
-            remove_counter += CURSOR_END_MARKER.len();
+            remove_counter += CURSOR_END_MARKER.to_string().len();
             last_cut_index = end_index+remove_counter;
 
             cursor_state.cursor.push([start_index, end_index]);

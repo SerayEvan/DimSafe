@@ -49,12 +49,6 @@ impl Error {
     }
 }
 
-pub fn set_loc_range<T>(result: &mut Result<T, Error>, loc_range: &RangeReverseLocation) {
-    if let Err(error) = result {
-        error.set_loc_range(loc_range);
-    }
-}
-
 pub struct UnsupportedError {
     pub functionality: &'static str,
 }

@@ -51,12 +51,6 @@ impl UnitDimension {
             _ => true,
         }
     }
-    fn is_error(&self) -> bool {
-        match self {
-            Self::Error => true,
-            _ => false,
-        }
-    }
 }
 impl Display for UnitDimension {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -153,7 +147,7 @@ impl Div<UnitDimension> for UnitDimension {
 }
 impl Div<f64> for UnitDimension {
     type Output = Self;
-    fn div(self, b: f64) -> Self::Output {
+    fn div(self, _: f64) -> Self::Output {
         self
     }
 }
@@ -162,11 +156,11 @@ impl Div<UnitDimension> for f64 {
     fn div(self, b: UnitDimension) -> Self::Output {
         match b {
             UnitDimension::Define(dim) => {
-                let mut dim = [0.0; NUMBER_OF_UNITS];
+                let mut new_dim = [0.0; NUMBER_OF_UNITS];
                 for i in 0..NUMBER_OF_UNITS {
-                    dim[i] = 1.0 - dim[i];
+                    new_dim[i] = 1.0 - dim[i];
                 }
-                UnitDimension::Define(dim)
+                UnitDimension::Define(new_dim)
             }
             UnitDimension::Error => UnitDimension::Error,
             UnitDimension::Unmonitor => UnitDimension::Unmonitor,
@@ -315,16 +309,6 @@ fn derive_from_label(dim_dict: &mut HashMap<String, Unit>, unit_dim: Unit, label
         let unit = unit_dim * p_val;
         dim_dict.insert(p_lab.to_string() + label, unit);
     }
-}
-
-fn si_units(dict: &mut HashMap<String, Unit>) {
-    derive_from_label(dict, METERS_UNIT, "m");
-    derive_from_label(dict, SECONDS_UNIT, "s");
-    derive_from_label(dict, KILOGRAMS_UNIT, "kg");
-    derive_from_label(dict, AMPERES_UNIT, "A");
-    derive_from_label(dict, KELVINS_UNIT, "K");
-    derive_from_label(dict, MOLES_UNIT, "mol");
-    derive_from_label(dict, CANDLEAS_UNIT, "cd");
 }
 
 fn make_unit_dictionary() -> HashMap<String, Unit> {

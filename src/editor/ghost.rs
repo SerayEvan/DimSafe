@@ -7,9 +7,10 @@ use leptos::prelude::*;
 
 use crate::scope::output::*;
 use crate::editor::stylization::*;
+use crate::editor::cursor::{CURSOR_BEGIN_MARKER, CURSOR_END_MARKER};
 
-const GHOST_BEGIN_MARKER: &str = "\u{e003}";
-const GHOST_END_MARKER: &str = "\u{e004}";
+const GHOST_BEGIN_MARKER: char = '\u{e003}';
+const GHOST_END_MARKER: char = '\u{e004}';
 
 #[derive(Debug)]
 pub struct GhostReversePlacement {
@@ -36,7 +37,7 @@ impl GhostReversePlacement {
             let class_name = span.class_name();
             let index = class_name.split("ghost_overlay_").last().expect("Cannot get index").parse::<usize>().expect("Cannot parse index");
 
-            let text = GHOST_BEGIN_MARKER.to_string() + &index.to_string() + GHOST_END_MARKER;
+            let text = GHOST_BEGIN_MARKER.to_string() + &index.to_string() + &GHOST_END_MARKER.to_string();
             span.set_inner_html(&text);
         }
     }
@@ -45,6 +46,7 @@ impl GhostReversePlacement {
         let mut ghost_reverse_placement = GhostReversePlacement{marker: vec![]};
         let mut new_string = String::new();
         let mut last_cut_index = 0;
+        let mut nb_invalid_characters = 0;
         loop {
 
             // find start index of ghost begin marker
@@ -58,15 +60,22 @@ impl GhostReversePlacement {
             let end_index = end_index.unwrap() + start_index;
 
             // get index of ghost overlay
-            let str_index = &text[start_index+GHOST_BEGIN_MARKER.len()..end_index];
+            let str_index = &text[start_index+GHOST_BEGIN_MARKER.to_string().len()..end_index];
             let index = str_index.parse::<usize>().expect("Cannot parse index");
+
+            // count number of invalid characters between start and end index
+            nb_invalid_characters += text[last_cut_index..start_index]
+                .chars()
+                .filter(|c| c == &CURSOR_BEGIN_MARKER || c == &CURSOR_END_MARKER)
+                .map(|c| c.len_utf8())
+                .sum::<usize>();
 
             // add text to new string
             new_string += &text[last_cut_index..start_index];
             
-            ghost_reverse_placement.marker.push((new_string.len(), index));
+            ghost_reverse_placement.marker.push((new_string.len() - nb_invalid_characters, index));
 
-            last_cut_index = end_index + GHOST_END_MARKER.len();
+            last_cut_index = end_index + GHOST_END_MARKER.to_string().len();
         }
         // add remaining text to new string
         new_string += &text[last_cut_index..];

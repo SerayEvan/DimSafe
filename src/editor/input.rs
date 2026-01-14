@@ -28,8 +28,8 @@ fn stylize_text<T: Fn(&str, &mut Stylization, GhostReversePlacement) -> ()>(node
     let text = node.text_content().unwrap_or_default();
 
     // get cursor state, ghost reverse placement and text
-    let (cursor_state, brute_text) = CursorState::retrieve_cursor(&text);
-    let (ghost_reverse_placement, brute_text) = GhostReversePlacement::retrieve_ghost_overlay(&brute_text);
+    let (ghost_reverse_placement, brute_text) = GhostReversePlacement::retrieve_ghost_overlay(&text);
+    let (cursor_state, brute_text) = CursorState::retrieve_cursor(&brute_text);
 
     let mut stylization = Stylization::new();
 

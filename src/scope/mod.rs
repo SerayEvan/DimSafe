@@ -34,11 +34,6 @@ impl Scope {
     pub fn new() -> Self {
         Self { variables: HashMap::new() }
     }
-    pub fn merge(&self, other: &Self) -> Self {
-        let mut variables = self.variables.clone();
-        variables.extend(other.variables.clone());
-        Self { variables }
-    }
 
     pub fn get_value(&self, key: &Identifier, errors: &mut ErrorCollector) -> Value {
         match self.variables.get(&key.text.last().unwrap().clone()) {

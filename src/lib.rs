@@ -55,7 +55,7 @@ pub fn start() -> Result<(), JsValue> {
 
         view! {
             <div>
-                <h1>"SmartCalc"</h1>
+                <h1>"DimSafe"</h1>
             </div>
             <CodeInput input_text=signal output_signal=output_signal on_change=on_change on_run=on_run />
             <footer>

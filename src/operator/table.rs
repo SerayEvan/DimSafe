@@ -9,8 +9,6 @@ use crate::value::*;
 use super::implementation::*;
 use super::*;
 
-use lazy_static::lazy_static;
-
 pub struct OperatorTable {
     implementations: HashMap<Operator, Vec<OperatorImplementation>>,
 }
