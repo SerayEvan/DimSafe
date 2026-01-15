@@ -21,7 +21,7 @@ fn stylize_text<T: Fn(&str, &mut Stylization, GhostReversePlacement) -> ()>(node
     let node = node_ref.get().expect("Node ref is not a div or not found");
 
     // insert marker
-    CursorState::insert_marker();
+    CursorState::insert_marker(&node);
     GhostReversePlacement::insert_marker(&node);
 
     // get text content of node_ref
@@ -144,9 +144,9 @@ pub fn CodeInput(
                 }
                 spellcheck="false"
             />
+            <div node_ref=output_overlays_node_ref>
+            </div>
             <button on:click=on_run_click>"Run"</button>
-        </div>
-        <div node_ref=output_overlays_node_ref>
         </div>
     }
 }

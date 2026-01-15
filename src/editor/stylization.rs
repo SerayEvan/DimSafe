@@ -162,8 +162,6 @@ impl Stylization {
                 view_collection.push(view! {
                     <span 
                         class=format!("ghost_overlay ghost_overlay_{}", ghost_overlay.index)
-                        style:display="inline-block"
-                        style:height="1lh"
                     ></span>
                 }.into_any());
             }

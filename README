@@ -1,30 +1,6 @@
 # DimSafe
 
-
-High-level overview of DimSafe, a Rust-based dimensioning calculator software with parsing and AST support.
-
-## Table of Contents
-
-- About
-- Features
-- Getting Started
-- Usage
-- Project Structure
-- Testing
-- Roadmap
-- Contributing
-- License
-
-## About
-
-Briefly describe the goal of DimSafe and the problems it solves. Mention the core technologies (Rust, parser/AST design, storage layer).
-
-## Features
-
-- Core arithmetic and expression parsing
-- AST evaluation with location tracking
-- Storage layer for persisted values
-- Add or remove bullet points as features land
+> DimSafe is a calculation language with native units, automatic conversions, and dimensional checking, featuring a dedicated parser and a web-based editor.
 
 ## Build and Run
 
@@ -34,46 +10,32 @@ This project is a web application using Leptos in a WASM environment, so you nee
 
 So first, you need to have cargo with wasm-pack and trunk installed.
 
-### Build
-
-And then you have two options:
-
-1. Build with trunk for development:
-
-```bash
-cargo trunk serve
-```
-
-2. Build with wasm-pack for production:
-
-```bash
-cargo build --target wasm32-unknown-unknown
-```
-
-But after that, you need to run a simple HTTP server to serve the files.
-You can use vs code extension "Live Server" to serve the files.
-
 ### Run
 
-for trunk, the server will be available at http://localhost:8080
-for wasm-pack, the server will be on TODO
+In development mode, you can run the server with:
+
+```bash
+trunk serve
+```
+
+This will start the server at http://localhost:8080 and automatically reload the page when you make changes.
+
+### Build
+
+If you want to get a production build, you can build with trunk:
+
+```bash
+trunk build --release
+```
+
+This will create a `dist` directory with the production of a static website.
+You can then serve the website with a simple HTTP server like live-server extension in VS Code.
 
 ## Project Structure
 
-- `src/lib.rs`: crate entry
-- `src/parser.rs`: expression parsing
-- `src/ast/`: AST nodes and location utilities
-- `src/storage.rs`: persistence helpers
-- `src/shownable.rs`: formatting utilities
-- Update this section as files change
-
-## Roadmap
-
-- Outline upcoming milestones and planned improvements.
-
-## Contributing
-
-State contribution guidelines, coding style, and how to open issues/PRs.
+- `src/`: source code in rust
+- `public/`: css styles and html template
+- `dist/`: production build
 
 ## License
 

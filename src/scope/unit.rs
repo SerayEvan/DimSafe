@@ -66,8 +66,8 @@ impl Display for UnitDimension {
                 write!(f, "]]")?;
                 Ok(())
             }
-            Self::Error => write!(f, "Error"),
-            Self::Unmonitor => write!(f, "Unmonitor"),
+            Self::Error => write!(f, "[[Error]]"),
+            Self::Unmonitor => write!(f, ""),
         }
     }
 }

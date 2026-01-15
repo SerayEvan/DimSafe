@@ -46,7 +46,7 @@ fn insert_marker(parent_node: &Node, offset: u32, marker: &str) {
 
 impl CursorState {
 
-    pub fn insert_marker() {
+    pub fn insert_marker(node: &Node) {
 
         let window = window();
         
@@ -64,6 +64,13 @@ impl CursorState {
             let start_offset = range.start_offset().expect("Cannot get start offset");
             let end_node = range.end_container().expect("Cannot get end container");
             let end_offset = range.end_offset().expect("Cannot get end offset");
+
+            // verify if start_node and end_node are children of node
+            if !node.contains(Some(&start_node)) || !node.contains(Some(&end_node)) {
+                continue;
+            }
+
+            // insert marker at end of range
             insert_marker(&end_node, end_offset, &CURSOR_END_MARKER.to_string());
             insert_marker(&start_node, start_offset, &CURSOR_BEGIN_MARKER.to_string());
         }

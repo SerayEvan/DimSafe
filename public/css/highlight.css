@@ -2,7 +2,7 @@
    Copyright 2025 Evan SERAY */
 
 .literal_numerical {
-    color: #9494d2;
+    color: #a6a6ff;
 }
 .literal_keyword {
     color: #7f56d6;
@@ -14,11 +14,11 @@
     color: #4646be;
 }
 .identifier {
-    color: #e7c85a;
+    color: #fbd348;
 }
 .operator {
     color: #ffffff;
 }
 .structural {
-    color: #cbcbcb;
+    color: #fff;
 }

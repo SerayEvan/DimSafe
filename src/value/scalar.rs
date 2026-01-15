@@ -19,7 +19,11 @@ pub struct Scalar {
 
 impl Display for Scalar {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} {}", self.value, self.unit)
+        if self.unit == NO_DIMENSION {
+            write!(f, "{}", self.value)
+        } else {
+            write!(f, "{} {}", self.value, self.unit)
+        }
     }
 }
 
