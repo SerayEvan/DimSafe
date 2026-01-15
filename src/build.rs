@@ -2,7 +2,12 @@
 // Copyright 2025 Evan SERAY
 
 use lalrpop;
+use lalrpop::Configuration;
 
 fn main() {
-    lalrpop::process_root().unwrap();
+    Configuration::new()
+        .generate_in_source_tree()
+        .process()
+        .unwrap();
+    //lalrpop::process_root().unwrap();
 }

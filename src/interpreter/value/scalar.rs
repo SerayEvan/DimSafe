@@ -125,5 +125,22 @@ pub fn scalar_operator(op_table: &mut OperatorTable) {
             }
         )
     );
+    op_table.add_implementation(
+        Operator::ArithmeticPow,
+        OperatorImplementation::new(
+            vec![TypeId::Scalar, TypeId::Scalar],
+            false,
+            |inputs, errors| {
+                let a = Scalar::try_from_value(&inputs[0]).unwrap();
+                let b = Scalar::try_from_value(&inputs[1]).unwrap();
+                let result = a.value.powf(b.value);
+                if !result.is_finite() {
+                    errors.raise(InvalidInputError{message: "Power operation".to_string()});
+                    return Value::Failed;
+                }
+                Value::Scalar(Scalar{value: result, unit: a.unit.powf(b.value)})
+            }
+        )
+    );
 
 }

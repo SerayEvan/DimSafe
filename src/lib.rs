@@ -12,7 +12,7 @@ use log::Level;
 use log::info;
 
 use editor::input::*;
-use interpreter::lexer::*;
+use editor::storage::*;
 use interpreter::parser::*;
 use interpreter::scope::*;
 use interpreter::error::collector::*;

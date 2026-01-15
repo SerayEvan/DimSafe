@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2025 Evan SERAY
 
-use lalrpop_util::lalrpop_mod;
 use log::info;
 
 use super::ast::expression::*;
@@ -9,7 +8,7 @@ use super::ast::location::*;
 use super::ast::ast_node::*;
 use super::lexer::*;
 
-lalrpop_mod!(grammar);
+use super::grammar::*;
 
 fn get_lines_pos(input: &str) -> Vec<usize> {
     let mut lines_index = vec![0];
@@ -38,7 +37,7 @@ pub fn parse_program(input: &str) -> Result<Vec<Spanned<Expression>>, String> {
     info!("{:?}", tokens);
 
     // parse program
-    let program = grammar::ProgramParser::new().parse(tokens);
+    let program = ProgramParser::new().parse(tokens);
 
     // reverse location
     let mut program = program.map_err(|e| format!("{:?}", e))?;

@@ -7,6 +7,8 @@ use std::collections::BTreeMap;
 use std::ops::Bound;
 use std::cmp::min;
 
+use crate::interpreter::lexer::*;
+
 type Balise = usize;
 
 pub static BALISE_LIST: [&'static str; 9] = [
@@ -44,6 +46,27 @@ fn get_balise_class(balise: Balise) -> String {
     class.pop();
     class
 }
+
+pub fn get_balise(token: &Token) -> usize {
+    match token {
+        Token::LiteralNumerical(_) => LITERAL_NUMERICAL_BALISE,
+        Token::LiteralKeyword(_) => LITERAL_KEYWORD_BALISE,
+        Token::LiteralString(_) => LITERAL_STRING_BALISE,
+        Token::LiteralUnit(_) => LITERAL_UNIT_BALISE,
+        Token::Identifier(_) => IDENTIFIER_BALISE,
+        Token::StructuralToken(_) => STRUCTURAL_BALISE,
+        Token::AssignmentOperator(_) => STRUCTURAL_BALISE,
+        Token::AdditiveOperator(_) => OPERATOR_BALISE,
+        Token::SubtractiveOperator(_) => OPERATOR_BALISE,
+        Token::MultiplicativeOperator(_) => OPERATOR_BALISE,
+        Token::PowerOperator(_) => OPERATOR_BALISE,
+        Token::VectorMultiplicativeOperator(_) => OPERATOR_BALISE,
+        Token::BooleanOperator(_) => OPERATOR_BALISE,
+        Token::ComparatorOperator(_) => OPERATOR_BALISE,
+        Token::RawError => EMPTY_BALISE,
+    }
+}
+
 
 #[derive(Clone,Copy,Debug)]
 pub struct GhostOverlayIndex {

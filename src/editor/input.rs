@@ -50,6 +50,15 @@ fn stylize_text<T: Fn(&str, &mut Stylization, GhostReversePlacement) -> ()>(node
     CursorState::restore_cursor(window);
 }
 
+fn stylize_text_with_lexer(text: &str, stylization: &mut Stylization) {
+    let lexer = Lexer::new(text);
+    for token in lexer {
+        if let Ok((start, token, end)) = token {
+            stylization.insert_balise(get_balise(&token), (start, end));
+        }
+    }
+}
+
 #[component]
 pub fn CodeInput(
     #[prop(into)] input_text: RwSignal<String>,
@@ -79,7 +88,7 @@ pub fn CodeInput(
         stylize_text(input_node_ref, |text, stylization, previous_ghost_placement| {
 
             let lexer = Lexer::new(text);
-            lexer.stylize(stylization);
+            stylize_text_with_lexer(text, stylization);
 
             let ghost_placement = if output.is_placed {
                 previous_ghost_placement

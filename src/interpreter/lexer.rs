@@ -226,28 +226,6 @@ pub enum Token {
     RawError,
 }
 
-impl Token {
-    pub fn get_balise(&self) -> usize {
-        match self {
-            Token::LiteralNumerical(_) => LITERAL_NUMERICAL_BALISE,
-            Token::LiteralKeyword(_) => LITERAL_KEYWORD_BALISE,
-            Token::LiteralString(_) => LITERAL_STRING_BALISE,
-            Token::LiteralUnit(_) => LITERAL_UNIT_BALISE,
-            Token::Identifier(_) => IDENTIFIER_BALISE,
-            Token::StructuralToken(_) => STRUCTURAL_BALISE,
-            Token::AssignmentOperator(_) => STRUCTURAL_BALISE,
-            Token::AdditiveOperator(_) => OPERATOR_BALISE,
-            Token::SubtractiveOperator(_) => OPERATOR_BALISE,
-            Token::MultiplicativeOperator(_) => OPERATOR_BALISE,
-            Token::PowerOperator(_) => OPERATOR_BALISE,
-            Token::VectorMultiplicativeOperator(_) => OPERATOR_BALISE,
-            Token::BooleanOperator(_) => OPERATOR_BALISE,
-            Token::ComparatorOperator(_) => OPERATOR_BALISE,
-            Token::RawError => EMPTY_BALISE,
-        }
-    }
-}
-
 impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
       write!(f, "{:?}", self)
@@ -275,16 +253,6 @@ impl<'input> Iterator for Lexer<'input> {
         self.token_stream
         .next()
         .map(|(token, span)| Ok((span.start, token?, span.end)))
-    }
-}
-
-impl<'input> Lexer<'input> {
-    pub fn stylize(self, stylization: &mut Stylization) {
-        for token in self {
-            if let Ok((tok_start, tok, tok_end)) = token {
-                stylization.insert_balise(tok.get_balise(), (tok_start, tok_end));
-            }
-        }
     }
 }
 
