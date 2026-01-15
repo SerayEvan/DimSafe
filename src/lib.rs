@@ -11,6 +11,7 @@ mod scope;
 mod error;
 mod operator;
 mod value;
+mod unit;
 
 use wasm_bindgen::prelude::*;
 use leptos::prelude::*;

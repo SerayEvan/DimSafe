@@ -5,7 +5,7 @@ pub mod collector;
 
 use crate::ast::location::*;
 use crate::scope::*;
-use crate::scope::unit::*;
+use crate::unit::dimension::*;
 
 pub trait ErrorMessage {
     fn raise<T>(self) -> Result<T, Error>;

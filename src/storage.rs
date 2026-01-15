@@ -13,7 +13,7 @@ where
         .expect("could not access localStorage")
         .expect("localStorage not available");
 
-    let value= match storage.get_item(&key) {
+    let value = match storage.get_item(&key) {
         Ok(Some(raw)) => {
             serde_json::from_str(&raw).ok()
         }

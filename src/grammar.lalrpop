@@ -5,7 +5,8 @@ grammar;
 
 use crate::lexer::*;
 
-use crate::ast::*;
+use crate::ast::expression::*;
+use crate::ast::literal_value::*;
 use crate::ast::location::*;
 use crate::ast::ast_node::*;
 
@@ -163,6 +164,10 @@ Arguments: Vec<Spanned<Expression>> = {
   <mut args: (<Locate<Expression>> ",")*> <e:Locate<Expression>?> => {if let Some(e) = e {args.push(e);} args},
 };
 
+pub ProgramLine: Expression = {
+  <e: Expression> ";" => e,
+};
+
 pub Program: Vec<Spanned<Expression>> = {
-  <mut expr: (<Locate<Expression>> ";")*> <e:Locate<Expression>?> => {if let Some(e) = e {expr.push(e);} expr},
+  <mut expr: (<Locate<ProgramLine>>)*> <e:Locate<Expression>?> => {if let Some(e) = e {expr.push(e);} expr},
 };

@@ -1,5 +1,7 @@
 [build]
 target = "public/index.html"
+inject_scripts = true
+minify = "on_release"
 
 [serve]
 port = 8080

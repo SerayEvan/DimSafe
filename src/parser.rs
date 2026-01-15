@@ -4,7 +4,7 @@
 use lalrpop_util::lalrpop_mod;
 use log::info;
 
-use crate::ast::*;
+use crate::ast::expression::*;
 use crate::ast::location::*;
 use crate::ast::ast_node::*;
 use crate::lexer::*;
@@ -51,6 +51,7 @@ mod tests {
     use super::*;
 
     use crate::operator::*;
+    use crate::ast::literal_value::*;
 
     #[test]
     fn test_get_lines_pos() {

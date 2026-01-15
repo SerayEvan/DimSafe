@@ -5,7 +5,7 @@ use crate::operator::table::*;
 use crate::error::*;
 use crate::operator::implementation::*;
 use crate::operator::*;
-use crate::scope::unit::*;
+use crate::unit::dimension::*;
 use super::*;
 use std::fmt;
 use std::fmt::Display;

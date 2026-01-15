@@ -172,7 +172,9 @@ impl Stylization {
                     {&text[start_byte..end_byte]}
                 </span>
             }.into_any());
+
         }
+        
         view_collection
     }
 }
@@ -210,7 +212,7 @@ mod tests {
         <span class=\"cursor_begin cursor_end literal_numerical\">2</span>\
         <span class=\"operator\">*</span>\
         <span class=\"literal_numerical\">32</span>\
-        <span class=\"\"> </span>");
+        <span class=\"\"> </span><!>");
     }
 
     #[test]
@@ -233,9 +235,9 @@ mod tests {
         // assert style text
         assert_eq!(style_text, "\
         <span class=\"\">Un p</span>\
-        <span class=\"ghost_overlay ghost_overlay_0\" style=\"display:inline-block;\"></span>\
-        <span class=\"ghost_overlay ghost_overlay_1\" style=\"display:inline-block;\"></span>\
-        <span class=\"\">eu de texte</span>");
+        <span class=\"ghost_overlay ghost_overlay_0\"></span>\
+        <span class=\"ghost_overlay ghost_overlay_1\"></span>\
+        <span class=\"\">eu de texte</span><!>");
 
     }
 }
