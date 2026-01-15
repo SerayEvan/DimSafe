@@ -12,6 +12,7 @@
 }
 .literal_unit {
     color: #4646be;
+    font-style: italic;
 }
 .identifier {
     color: #fbd348;

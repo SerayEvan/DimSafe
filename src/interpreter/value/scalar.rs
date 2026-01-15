@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2025 Evan SERAY
 
-use crate::operator::table::*;
-use crate::error::*;
-use crate::operator::implementation::*;
-use crate::operator::*;
-use crate::unit::dimension::*;
-use super::*;
 use std::fmt;
 use std::fmt::Display;
+
+use super::super::operator::table::*;
+use super::super::error::*;
+use super::super::operator::implementation::*;
+use super::super::operator::*;
+use super::super::unit::dimension::*;
+
+use super::*;
 
 
 #[derive(Debug, Clone, PartialEq)]

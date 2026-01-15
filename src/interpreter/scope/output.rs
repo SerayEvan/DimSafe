@@ -1,4 +1,7 @@
-use crate::ast::location::*;
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2025 Evan SERAY
+
+use super::super::ast::location::*;
 
 #[derive(Clone)]
 pub struct Output {

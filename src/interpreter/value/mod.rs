@@ -3,11 +3,13 @@
 
 pub mod scalar;
 
-use super::value::scalar::*;
-use crate::operator::table::*;
 use lazy_static::lazy_static;
 use std::fmt;
 use std::fmt::Display;
+
+use super::operator::table::*;
+
+use self::scalar::*;
 
 pub trait ValueTrait: Sized {
     fn type_id() -> TypeId;

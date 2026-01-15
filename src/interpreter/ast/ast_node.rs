@@ -4,9 +4,9 @@
 use std::ops::Deref;
 use std::fmt::Debug;
 
-use crate::scope::*;
-use crate::error::collector::*;
-use crate::scope::output::*;
+use super::super::scope::*;
+use super::super::error::collector::*;
+use super::super::scope::output::*;
 
 pub trait AstNode {
     type Output: Clone;

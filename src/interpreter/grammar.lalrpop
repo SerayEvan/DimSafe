@@ -1,18 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2025 Evan SERAY
 
-grammar;
+interpreter::grammar;
 
-use crate::lexer::*;
-
-use crate::ast::expression::*;
-use crate::ast::literal_value::*;
-use crate::ast::location::*;
-use crate::ast::ast_node::*;
-
-use crate::scope::*;
-use crate::operator::*;
-use crate::value::*;
+use super::lexer::*;
+use super::ast::expression::*;
+use super::ast::literal_value::*;
+use super::ast::location::*;
+use super::ast::ast_node::*;
+use super::scope::*;
+use super::operator::*;
+use super::value::*;
 
 extern {
   type Location = usize;

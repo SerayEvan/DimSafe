@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2025 Evan SERAY
 
-use crate::ast::ast_node::*;
-use crate::value::*;
-use crate::scope::*;
-use crate::error::*;
-use crate::error::collector::*;
-use crate::scope::output::*;
-use crate::unit::unit::*;
-use crate::unit::dimension::*;
-use crate::value::scalar::*;
+use super::super::value::*;
+use super::super::scope::*;
+use super::super::error::*;
+use super::super::error::collector::*;
+use super::super::scope::output::*;
+use super::super::unit::unit::*;
+use super::super::unit::dimension::*;
+use super::super::value::scalar::*;
+
+use super::ast_node::*;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum LiteralValue {

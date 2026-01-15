@@ -5,7 +5,7 @@ use std::ops::{Mul, Div};
 use std::collections::HashMap;
 use lazy_static::lazy_static;
 
-use crate::unit::dimension::*;
+use super::dimension::*;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Unit {

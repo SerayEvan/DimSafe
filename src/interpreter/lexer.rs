@@ -5,8 +5,7 @@ use std::fmt;
 
 use logos::{Logos, SpannedIter};
 
-use crate::ast::literal_value::*;
-use crate::editor::stylization::*;
+use super::ast::literal_value::*;
 use super::operator::*;
 use super::scope::*;
 

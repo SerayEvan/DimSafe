@@ -1,17 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2025 Evan SERAY
 
-mod storage;
 mod editor;
-mod ast;
-mod lexer;
-mod parser;
-mod interperter;
-mod scope;
-mod error;
-mod operator;
-mod value;
-mod unit;
+mod interpreter;
 
 use wasm_bindgen::prelude::*;
 use leptos::prelude::*;
@@ -20,13 +11,13 @@ use console_log;
 use log::Level;
 use log::info;
 
-use storage::*;
 use editor::input::*;
-use parser::*;
-use scope::*;
-use error::collector::*;
-use scope::output::*;
-use ast::ast_node::*;
+use interpreter::lexer::*;
+use interpreter::parser::*;
+use interpreter::scope::*;
+use interpreter::error::collector::*;
+use interpreter::scope::output::*;
+use interpreter::ast::ast_node::*;
 
 #[wasm_bindgen(start)]
 pub fn start() -> Result<(), JsValue> {
@@ -60,7 +51,10 @@ pub fn start() -> Result<(), JsValue> {
             </div>
             <CodeInput input_text=signal output_signal=output_signal on_change=on_change on_run=on_run />
             <footer>
-                <p>"© 2025 Evan SERAY — Tous droits réservés"</p>
+                <p>
+                    "© 2025 Evan SERAY | "
+                    <a href="https://github.com" target="_blank" rel="noopener noreferrer">"GitHub"</a>
+                </p>
             </footer>
         }
     });

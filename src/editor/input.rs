@@ -8,8 +8,8 @@ use leptos::html;
 use leptos::html::Div;
 use log::info;
 
-use crate::lexer::*;
-use crate::scope::output::*;
+use crate::interpreter::lexer::*;
+use crate::interpreter::scope::output::*;
 
 use super::cursor::*;
 use super::stylization::*;

@@ -3,11 +3,12 @@
 
 use std::collections::HashMap;
 
-use crate::error::*;
-use crate::error::collector::*;
-use crate::value::*;
+use super::super::error::*;
+use super::super::error::collector::*;
+use super::super::value::*;
+
 use super::implementation::*;
-use super::*;
+use super::Operator;
 
 pub struct OperatorTable {
     implementations: HashMap<Operator, Vec<OperatorImplementation>>,

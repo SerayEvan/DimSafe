@@ -1,4 +1,4 @@
-use crate::error::*;
+use super::*;
 
 pub struct ErrorCollector {
     errors: Vec<Error>,

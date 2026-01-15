@@ -1,6 +1,6 @@
 # DimSafe
 
-> DimSafe is a calculation language with native units, automatic conversions, and dimensional checking, featuring a dedicated parser and a web-based editor.
+DimSafe is a calculation language with native units, automatic conversions, and dimensional checking, featuring a dedicated parser and a web-based editor.
 
 ## Build and Run
 

@@ -4,10 +4,10 @@
 use lalrpop_util::lalrpop_mod;
 use log::info;
 
-use crate::ast::expression::*;
-use crate::ast::location::*;
-use crate::ast::ast_node::*;
-use crate::lexer::*;
+use super::ast::expression::*;
+use super::ast::location::*;
+use super::ast::ast_node::*;
+use super::lexer::*;
 
 lalrpop_mod!(grammar);
 
@@ -50,8 +50,8 @@ pub fn parse_program(input: &str) -> Result<Vec<Spanned<Expression>>, String> {
 mod tests {
     use super::*;
 
-    use crate::operator::*;
-    use crate::ast::literal_value::*;
+    use crate::interpreter::operator::*;
+    use crate::interpreter::ast::literal_value::*;
 
     #[test]
     fn test_get_lines_pos() {

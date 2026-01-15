@@ -5,8 +5,8 @@ pub mod output;
 
 use std::collections::HashMap;
 
-use crate::error::*;
-use crate::error::collector::*;
+use super::error::*;
+use super::error::collector::*;
 use super::value::*;
 
 #[derive(Debug, Clone, PartialEq)]

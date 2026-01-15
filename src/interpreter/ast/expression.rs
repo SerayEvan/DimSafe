@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2025 Evan SERAY
 
-use crate::ast::ast_node::*;
-use crate::value::scalar::*;
-use crate::scope::*;
-use crate::value::*;
-use crate::unit::dimension::*;
-use crate::operator::*;
-use crate::error::*;
-use crate::error::collector::*;
-use crate::scope::output::*;
+use super::super::value::scalar::*;
+use super::super::scope::*;
+use super::super::value::*;
+use super::super::unit::dimension::*;
+use super::super::operator::*;
+use super::super::error::*;
+use super::super::error::collector::*;
+use super::super::scope::output::*;
 
 use super::location::*;
+use super::ast_node::*;
 use super::literal_value::*;
 
 #[derive(Debug, Clone, PartialEq)]

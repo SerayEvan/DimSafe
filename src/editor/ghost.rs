@@ -5,9 +5,10 @@ use wasm_bindgen::JsCast;
 use web_sys::{Element, Node, HtmlDivElement, HtmlElement};
 use leptos::prelude::*;
 
-use crate::scope::output::*;
-use crate::editor::stylization::*;
-use crate::editor::cursor::{CURSOR_BEGIN_MARKER, CURSOR_END_MARKER};
+use crate::interpreter::scope::output::*;
+
+use super::stylization::*;
+use super::cursor::{CURSOR_BEGIN_MARKER, CURSOR_END_MARKER};
 
 const GHOST_BEGIN_MARKER: char = '\u{e003}';
 const GHOST_END_MARKER: char = '\u{e004}';

@@ -5,9 +5,10 @@ use std::fmt::{Display, Debug};
 use std::fmt;
 use std::cmp::{Eq, Ord, Ordering, PartialEq, PartialOrd};
 
-use crate::scope::*;
-use crate::error::collector::*;
-use crate::scope::output::*;
+use super::super::scope::*;
+use super::super::error::collector::*;
+use super::super::scope::output::*;
+
 use super::ast_node::*;
 
 #[derive(Debug, Clone, PartialEq)]
