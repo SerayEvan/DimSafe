@@ -1,6 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2025 Evan SERAY
 
+/*
+
+The user cursor is a sensitive element of the editor, it can be disrupted by the addition of style to the text.
+
+To avoid this disruption, we use three steps:
+1) We use markers (invalid unicode characters) to mark the cursor position in the text.
+2) We retrieve the cursor position from the text and remove the markers.
+3) With stylization mechanism we add spans to the text to mark the cursor position.
+4) We place the cursor at the correct position in the text with spans balises.
+
+*/
+
 use leptos::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::{Window, Element, Node};
@@ -77,6 +89,11 @@ impl CursorState {
     }
 
     pub fn retrieve_cursor(text: &str) -> (CursorState, String) {
+
+        /* WARNING: This function did not work as expected if the text contains other markers that will be erased
+        by retrieve_ghost_overlay because he changes position of the markers in the text.
+        So you need to call this function after retrieve_ghost_overlay */
+        
         // retrieve cursor position from string and remove markers
         let mut cursor_state = CursorState{cursor: vec![]};
         let mut new_string = String::new();

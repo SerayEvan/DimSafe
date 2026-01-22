@@ -90,7 +90,7 @@ impl AstNode for Expression {
                 let args = args.evaluate(scope, errors, output);
                 OPERATOR_TABLE.compute(&op, &args, errors)
             }
-            Expression::Array { arr } => {
+            Expression::Array { arr: _ } => {
                 /* TODO */
                 errors.raise(UnsupportedError{functionality: "array"});
                 Value::Failed

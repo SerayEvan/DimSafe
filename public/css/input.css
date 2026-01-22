@@ -1,11 +1,20 @@
 /* SPDX-License-Identifier: Apache-2.0
    Copyright 2025 Evan SERAY */
    
+.box_input {
+    padding: 0.5em;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: left;
+    font-size: 1.5em;
+    background-color: rgb(23, 22, 27);
+    border-radius: 10px;
+}
+
 .input {
     color: white;
     border: none;
-    background-color: rgb(23, 22, 27);
-    border-radius: 10px;
     padding: 4px;
     min-height: 20px;
     outline: none;
@@ -14,11 +23,18 @@
 
 .output {
     color: white;
-    border: none;
-    background-color: rgb(17, 17, 20);
-    border-radius: 10px;
+    white-space: pre-wrap;
+}
+
+.line_number {
+    color: rgb(113, 113, 113);
+    background-color: rgb(23, 22, 27);
+    border-right: 0.1em solid rgb(113, 113, 113);
+    min-width: 3em;
+    margin-right: 0.5em;
     padding: 4px;
-    min-height: 20px;
+    padding-right: 0.5em;
+    text-align: right;
     outline: none;
     white-space: pre-wrap;
 }

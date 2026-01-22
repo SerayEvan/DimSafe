@@ -5,9 +5,9 @@ use super::super::ast::location::*;
 
 #[derive(Clone)]
 pub struct Output {
-    pub initial_location: LocationIndex,
-    pub index: usize,
-    pub text: String,
+    pub initial_location: LocationIndex, // location in text when the interpreter interpreted the text
+    pub index: usize, // index used to place the ghost overlay even if the text is modified
+    pub text: String, 
 }
 
 impl Output {
@@ -20,12 +20,11 @@ impl Output {
 pub struct OutputCollector {
     pub outputs: Vec<Output>,
     nb_ghost_overlay: usize,
-    pub is_placed: bool,
 }
 
 impl OutputCollector {
     pub fn new() -> Self {
-        Self { outputs: Vec::new(), nb_ghost_overlay: 0, is_placed: false }
+        Self { outputs: Vec::new(), nb_ghost_overlay: 0 }
     }
 
     pub fn add(&mut self, location: LocationIndex, text: String) {

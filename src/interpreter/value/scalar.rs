@@ -30,15 +30,11 @@ impl Display for Scalar {
 }
 
 impl ValueTrait for Scalar {
-    fn type_id() -> TypeId { TypeId::Scalar }
     fn try_from_value(value: &Value) -> Option<&Self> {
         match value {
             Value::Scalar(scalar) => Some(scalar),
             _ => None
         }
-    }
-    fn into_value(self) -> Value {
-        Value::Scalar(self)
     }
 }
 

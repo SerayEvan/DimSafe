@@ -10,7 +10,6 @@ use super::ast::location::*;
 use super::ast::ast_node::*;
 use super::scope::*;
 use super::operator::*;
-use super::value::*;
 
 extern {
   type Location = usize;

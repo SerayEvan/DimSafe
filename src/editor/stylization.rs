@@ -1,6 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2025 Evan SERAY
 
+/*
+
+When we want to add style to the text, we use a stylization mechanism to add spans to the text.
+The sensitive part is to avoid balise miss placement when the text is modified.
+The other part is to avoid collision between balises.
+To avoid this, we use a map of markers to store the balises.
+To avoid collision between balises, we use binary operations to merge the balises.
+Finally we use this map at the end to apply the balises to the text.
+
+*/
+
 use leptos::prelude::*;
 
 use std::collections::BTreeMap;
@@ -189,13 +200,22 @@ impl Stylization {
                 }.into_any());
             }
 
-            // add section to new text with balise class
-            view_collection.push(view! {
-                <span class={get_balise_class(marker.balise)}>
-                    {&text[start_byte..end_byte]}
-                </span>
-            }.into_any());
 
+            if start_byte < end_byte {
+                // add section to new text with balise class
+                view_collection.push(view! {
+                    <span class={get_balise_class(marker.balise)}>
+                        {&text[start_byte..end_byte]}
+                    </span>
+                }.into_any());
+
+            }
+            else {
+                // even if the text is empty, we need to use this if statement to avoid leptos to add a span instead of nothing
+                view_collection.push(view! {
+                    <span class={get_balise_class(marker.balise)}/>
+                }.into_any());
+            }
         }
         
         view_collection

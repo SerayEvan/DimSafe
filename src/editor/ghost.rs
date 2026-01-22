@@ -156,17 +156,27 @@ pub fn display_output_overlays(
         // find span element
         let span_element = input_node
             .get_elements_by_class_name(format!("ghost_overlay_{}", index).as_str())
-            .item(0).expect("Cannot get output overlay")
-            .dyn_into::<HtmlElement>().expect("Cannot convert to HtmlElement");
+            .item(0);
 
-        // find overlay element
         let overlay_element = output_overlays_node
             .get_elements_by_class_name(format!("output_overlay_{}", index).as_str())
-            .item(0).expect("Cannot get output overlay")
-            .dyn_into::<HtmlElement>().expect("Cannot convert to HtmlElement");
+            .item(0);
 
-        // register elements
-        elements.push((span_element, overlay_element));
+        // verify if span and overlay element are found and continue if not
+        match (span_element, overlay_element) {
+            (Some(span_element), Some(overlay_element)) => {
+
+                // convert span and overlay element to HtmlElement
+                let span_element = span_element.dyn_into::<HtmlElement>().expect("Cannot convert to HtmlElement");
+                let overlay_element = overlay_element.dyn_into::<HtmlElement>().expect("Cannot convert to HtmlElement");
+
+                // register elements
+                elements.push((span_element, overlay_element));
+            }
+            _ => {
+                continue;
+            }
+        }
     }
 
     // first loop to set width of span element

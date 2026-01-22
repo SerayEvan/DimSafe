@@ -26,7 +26,7 @@ where
 
     let signal = RwSignal::new(value);
 
-    // Synchronisation -> localStorage
+    // Synchronization -> localStorage
     Effect::new(move |_| {
         let current = signal.get();
         let json = serde_json::to_string(&current).expect("could not serialize signal");
@@ -36,7 +36,7 @@ where
     return Some(signal)
 }
 
-/// Supprime une clé dans `localStorage` et réinitialise le signal.
+/// Destroy a key in `localStorage` and reset the signal.
 pub fn destroy_local_storage(key: &str)
 {
     if let Ok(Some(storage)) = window().local_storage() {

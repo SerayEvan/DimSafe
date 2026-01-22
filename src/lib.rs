@@ -30,6 +30,7 @@ pub fn start() -> Result<(), JsValue> {
 
         let signal = local_storage_signal("value".to_string(), Some("".to_string())).unwrap();
         let output_signal = RwSignal::new(OutputCollector::new());
+        let is_executed = RwSignal::new(false);
         let on_change = Callback::new(move |value: String| {
             signal.set(value);
         });
@@ -41,6 +42,7 @@ pub fn start() -> Result<(), JsValue> {
                 let mut output = OutputCollector::new();
                 let _result = program.evaluate(&mut scope, &mut errors, &mut output);
                 info!("{}", errors.into_string());
+                is_executed.set(true);
                 output_signal.set(output);
             }
         });
@@ -49,7 +51,7 @@ pub fn start() -> Result<(), JsValue> {
             <div>
                 <h1>"DimSafe"</h1>
             </div>
-            <CodeInput input_text=signal output_signal=output_signal on_change=on_change on_run=on_run />
+            <CodeInput input_text=signal output_signal=output_signal is_executed=is_executed on_change=on_change on_run=on_run />
             <footer>
                 <p>
                     "© 2025 Evan SERAY | "
