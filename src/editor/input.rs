@@ -155,19 +155,27 @@ pub fn CodeInput(
 
                 on:keydown=move |ev| {
                     if ev.key() == "Enter" {
-                        ev.prevent_default(); // prevent <div> or <p>
-                        let selection = window().get_selection().expect("Cannot get selection").expect("No selection available");
-                        let range = selection.get_range_at(0).expect("Cannot get range");
-                    
-                        // Insert a text node containing a line break
-                        let br = document().create_text_node("\n");
-                        let _ = range.insert_node(&br);
-                    
-                        // Move cursor after the \n
-                        let _ = range.set_start_after(&br);
-                        let _ = range.set_end_after(&br);
-                        let _ = selection.remove_all_ranges();
-                        let _ = selection.add_range(&range);
+                        if let Some(target) = ev.target() {
+                            if let Ok(element) = target.dyn_into::<HtmlElement>() {
+                                ev.prevent_default(); // prevent <div> or <p>
+                                let selection = window().get_selection().expect("Cannot get selection").expect("No selection available");
+                                let range = selection.get_range_at(0).expect("Cannot get range");
+                            
+                                // Insert a text node containing a line break
+                                let br = document().create_text_node("\n");
+                                let _ = range.insert_node(&br);
+                            
+                                // Move cursor after the \n
+                                let _ = range.set_start_after(&br);
+                                let _ = range.set_end_after(&br);
+                                let _ = selection.remove_all_ranges();
+                                let _ = selection.add_range(&range);
+
+                                // call input event
+                                let text_content = element.text_content().unwrap_or_default();
+                                on_change.run(text_content);
+                            }
+                        }
                     }
                 }
             />
