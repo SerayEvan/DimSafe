@@ -20,6 +20,10 @@ pub struct GhostReversePlacement {
 
 impl GhostReversePlacement {
 
+    pub fn void() -> Self {
+        Self { marker: vec![] }
+    }
+
     pub fn from_output(output: &OutputCollector) -> Self {
         Self { 
             marker: output.outputs.iter().map(|output| (output.initial_location.index, output.index)).collect() 
@@ -96,13 +100,14 @@ impl GhostReversePlacement {
 pub fn GhostOverlayComponent(
     #[prop(into)] index: usize,
     children: Children,
+    #[prop(into)] is_executed: bool,
 ) -> impl IntoView {
     // ghost overlay as goal to display element without insert text or modify text user input
     // make a component in absolutely positionned at the position of the ghost overlay dynamically and set width and height of the span in the text	
     
     view! {
         <div 
-            class=format!("output_overlay output_overlay_{}", index)
+            class=format!("output_overlay output_overlay_{} {}", index, if is_executed { "" } else { "output_overlay_exceeded" })
             style:position="absolute" 
             style:left="0px"
             style:top="0px"
@@ -115,9 +120,10 @@ pub fn GhostOverlayComponent(
 #[component]
 pub fn TextGhostOverlay(
     #[prop(into)] output: Output,
+    #[prop(into)] is_executed: bool,
 ) -> impl IntoView {
     view! {
-        <GhostOverlayComponent index=output.index>
+        <GhostOverlayComponent index=output.index is_executed=is_executed>
             {output.text}
         </GhostOverlayComponent>
     }
@@ -125,13 +131,14 @@ pub fn TextGhostOverlay(
 
 pub fn render_output_overlays(
     output: &OutputCollector,
+    is_executed: bool,
 ) -> impl IntoView {
     let mut view_collection = Vec::new();
 
     for output in &output.outputs {
         view_collection.push(view! {
             <div>
-                <TextGhostOverlay output=output.clone() />
+                <TextGhostOverlay output=output.clone() is_executed=is_executed />
             </div>
         });
     }
@@ -143,10 +150,11 @@ pub fn display_output_overlays(
     output: OutputCollector,
     output_overlays_node: HtmlDivElement,
     input_node: HtmlDivElement,
+    is_executed: bool,
 ) {
 
     // display output overlays
-    output_overlays_node.set_inner_html(&render_output_overlays(&output).to_html());
+    output_overlays_node.set_inner_html(&render_output_overlays(&output, is_executed).to_html());
 
     let mut elements = Vec::new();
     

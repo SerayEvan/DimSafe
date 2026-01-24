@@ -44,6 +44,7 @@ fn parse_string(input: &str) -> LiteralValue {
                             let hex: String = chars.by_ref().take(2).collect();
                             match u8::from_str_radix(&hex, 16) {
                                 Ok(value) => result.push(value as char),
+                                // TODO: handle error
                                 Err(_) => panic!("Invalid hexadecimal escape sequence: \\x{}", hex),
                             }
                         },
@@ -53,8 +54,10 @@ fn parse_string(input: &str) -> LiteralValue {
                             match u32::from_str_radix(&hex, 16) {
                                 Ok(value) => match char::from_u32(value) {
                                     Some(ch) => result.push(ch),
+                                    // TODO: handle error
                                     None => panic!("Invalid Unicode scalar value: \\u{}", hex),
                                 },
+                                // TODO: handle error
                                 Err(_) => panic!("Invalid hexadecimal escape sequence: \\u{}", hex),
                             }
                         },
@@ -64,8 +67,10 @@ fn parse_string(input: &str) -> LiteralValue {
                             match u32::from_str_radix(&hex, 16) {
                                 Ok(value) => match char::from_u32(value) {
                                     Some(ch) => result.push(ch),
+                                    // TODO: handle error
                                     None => panic!("Invalid Unicode scalar value: \\U{}", hex),
                                 },
+                                // TODO: handle error
                                 Err(_) => panic!("Invalid hexadecimal escape sequence: \\U{}", hex),
                             }
                         },

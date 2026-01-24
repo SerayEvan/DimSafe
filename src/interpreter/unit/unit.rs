@@ -150,8 +150,9 @@ fn make_unit_dictionary() -> HashMap<String, Unit> {
     dict.insert("rad".to_string(), NO_UNIT);
     dict.insert("deg".to_string(), NO_UNIT * std::f64::consts::PI / 180.0);
 
-    dict.insert("minute".to_string(), SECONDS_UNIT * 60.0);
+    dict.insert("min".to_string(), SECONDS_UNIT * 60.0);
     dict.insert("hour".to_string(), SECONDS_UNIT * 3600.0);
+    dict.insert("day".to_string(), SECONDS_UNIT * 86400.0);
 
     dict.insert("error".to_string(), ERROR_UNIT);
     dict.insert("unmonitor".to_string(), UNMONITOR_UNIT);

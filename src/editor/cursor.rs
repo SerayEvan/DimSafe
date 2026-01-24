@@ -58,6 +58,10 @@ fn insert_marker(parent_node: &Node, offset: u32, marker: &str) {
 
 impl CursorState {
 
+    pub fn void() -> Self {
+        Self { cursor: vec![] }
+    }
+
     pub fn insert_marker(node: &Node) {
 
         let window = window();

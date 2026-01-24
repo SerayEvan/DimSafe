@@ -10,6 +10,8 @@ This project is a web application using Leptos in a WASM environment, so you nee
 
 So first, you need to have cargo with wasm-pack and trunk installed. All dependencies are managed with cargo during the build process.
 
+
+
 ### Run
 
 In development mode, you can run the server with:

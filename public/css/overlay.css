@@ -1,4 +1,6 @@
-
+/* SPDX-License-Identifier: Apache-2.0
+   Copyright 2025 Evan SERAY */
+   
 .output_overlay {
     border: 1px solid #2d601f;
     background-color: #18331d;
@@ -17,4 +19,10 @@
     margin-left: 4px;
     margin-right: 4px;
     vertical-align: bottom;
+}
+
+.output_overlay_exceeded {
+    border-color: #6b7f5f;
+    background-color: #31352f;
+    color: #e4e4e4;
 }
