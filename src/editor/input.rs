@@ -93,6 +93,7 @@ impl InputWrapper {
         let (mut ghost_placement, plain_text) = GhostReversePlacement::retrieve_ghost_overlay(&plain_text);
         let (mut cursor_state, cleaned_text) = CursorState::retrieve_cursor(&plain_text);
 
+        // initialize stylization
         let mut stylization = Stylization::new();
 
         // verify if text need to be modified

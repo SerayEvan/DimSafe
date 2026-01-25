@@ -9,21 +9,21 @@ use super::ast::literal_value::*;
 use super::operator::*;
 use super::scope::*;
 
-fn parse_integer(input: &str, base: u32) -> LiteralValue {
+fn parse_integer(input: &str, base: u32) -> Result<LiteralValue,LexicalError> {
     // TODO: manage overflow
-    LiteralValue::Integer(
-        i64::from_str_radix(input, base).unwrap()
-    )
+    Ok(LiteralValue::Integer(
+        i64::from_str_radix(input, base).map_err(|_| LexicalError::InvalidToken)?
+    ))
 }
 
-fn parse_float(input: &str) -> LiteralValue {
+fn parse_float(input: &str) -> Result<LiteralValue,LexicalError> {
     // TODO: manage overflow
-    LiteralValue::Float(
-        input.parse::<f64>().unwrap()
-    )
+    Ok(LiteralValue::Float(
+        input.parse::<f64>().map_err(|_| LexicalError::InvalidToken)?
+    ))
 }
 
-fn parse_string(input: &str) -> LiteralValue {
+fn parse_string(input: &str) -> Result<LiteralValue,LexicalError> {
     let mut result = String::new();
     let mut chars = input.chars().peekable(); // Utilise un itérateur avec un aperçu
 
@@ -45,7 +45,7 @@ fn parse_string(input: &str) -> LiteralValue {
                             match u8::from_str_radix(&hex, 16) {
                                 Ok(value) => result.push(value as char),
                                 // TODO: handle error
-                                Err(_) => panic!("Invalid hexadecimal escape sequence: \\x{}", hex),
+                                Err(_) => return Err(LexicalError::InvalidToken),
                             }
                         },
                         'u' => {
@@ -55,10 +55,10 @@ fn parse_string(input: &str) -> LiteralValue {
                                 Ok(value) => match char::from_u32(value) {
                                     Some(ch) => result.push(ch),
                                     // TODO: handle error
-                                    None => panic!("Invalid Unicode scalar value: \\u{}", hex),
+                                    None => return Err(LexicalError::InvalidToken),
                                 },
                                 // TODO: handle error
-                                Err(_) => panic!("Invalid hexadecimal escape sequence: \\u{}", hex),
+                                Err(_) => return Err(LexicalError::InvalidToken),
                             }
                         },
                         'U' => {
@@ -68,10 +68,10 @@ fn parse_string(input: &str) -> LiteralValue {
                                 Ok(value) => match char::from_u32(value) {
                                     Some(ch) => result.push(ch),
                                     // TODO: handle error
-                                    None => panic!("Invalid Unicode scalar value: \\U{}", hex),
+                                    None => return Err(LexicalError::InvalidToken),
                                 },
                                 // TODO: handle error
-                                Err(_) => panic!("Invalid hexadecimal escape sequence: \\U{}", hex),
+                                Err(_) => return Err(LexicalError::InvalidToken),
                             }
                         },
                         _ => result.push(next), // Pour tout autre caractère échappé, l'ajouter tel quel
@@ -82,10 +82,10 @@ fn parse_string(input: &str) -> LiteralValue {
         }
     }
 
-    LiteralValue::String(result)
+    Ok(LiteralValue::String(result))
 }
 
-pub fn parse_unit(input: &str) -> LiteralValue {
+pub fn parse_unit(input: &str) -> Result<LiteralValue,LexicalError> {
 
     // split string in 2 parts : [unit] [exponent with optional + or -]
     let mut split_idx = 0;
@@ -101,10 +101,10 @@ pub fn parse_unit(input: &str) -> LiteralValue {
     let exponent = if split_idx == input.len() { 
         1.0
     } else {
-        input[split_idx..].parse::<i32>().unwrap_or(1) as f64
+        input[split_idx..].parse::<i32>().map_err(|_| LexicalError::InvalidToken)? as f64
     };
 
-    LiteralValue::Unit(unit.to_string(), exponent)
+    Ok(LiteralValue::Unit(unit.to_string(), exponent))
 }
 
 #[derive(Default, Debug, Clone, PartialEq)]
@@ -237,7 +237,7 @@ impl fmt::Display for Token {
     }
 }
 
-pub type SpannedToken<Tok, Loc, Error> = Result<(Loc, Tok, Loc), Error>;
+pub type SpannedToken<Tok, Loc, Error> = Result<(Loc, Tok, Loc), (Loc, Error, Loc)>;
 
 pub struct Lexer<'input> {
   // instead of an iterator over characters, we have a token iterator
@@ -255,9 +255,11 @@ impl<'input> Iterator for Lexer<'input> {
     type Item = SpannedToken<Token, usize, LexicalError>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.token_stream
-        .next()
-        .map(|(token, span)| Ok((span.start, token?, span.end)))
+        let (token, span) = self.token_stream.next()?;
+        Some(match token {
+            Ok(token) => Ok((span.start, token, span.end)),
+            Err(error) => Err((span.start, error, span.end)),
+        })
     }
 }
 

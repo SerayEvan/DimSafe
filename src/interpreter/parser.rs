@@ -2,6 +2,7 @@
 // Copyright 2025 Evan SERAY
 
 use log::info;
+use lalrpop_util::ParseError;
 
 use super::ast::expression::*;
 use super::ast::location::*;
@@ -20,7 +21,32 @@ fn get_lines_pos(input: &str) -> Vec<usize> {
     lines_index
 }
 
-pub fn parse_program(input: &str) -> Result<Vec<Spanned<Expression>>, String> {
+fn get_error_location(error: &ParseError<usize, Token, (usize, LexicalError, usize)>) -> ErrorLocation {
+    match error {
+        ParseError::InvalidToken { location, .. } => {
+            ErrorLocation { loc_range: RangeIndex::new(*location, *location) }
+        }
+        ParseError::UnrecognizedEof { location, .. } => {
+            ErrorLocation { loc_range: RangeIndex::new(*location, *location) }
+        }
+        ParseError::UnrecognizedToken { token, expected } => {
+            ErrorLocation { loc_range: RangeIndex::new(token.0, token.2) }
+        }
+        ParseError::ExtraToken { token } => {
+            ErrorLocation { loc_range: RangeIndex::new(token.0, token.2) }
+        }
+        ParseError::User  { error } => {
+            ErrorLocation { loc_range: RangeIndex::new(error.0, error.2) }
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct ErrorLocation {
+    pub loc_range: RangeIndex,
+}
+
+pub fn parse_program(input: &str) -> Result<Vec<Spanned<Expression>>, ErrorLocation> {
 
     info!("Parsing program: {}", input);
 
@@ -40,9 +66,15 @@ pub fn parse_program(input: &str) -> Result<Vec<Spanned<Expression>>, String> {
     let program = ProgramParser::new().parse(tokens);
 
     // reverse location
-    let mut program = program.map_err(|e| format!("{:?}", e))?;
-    program.rev_location(0, &lines_pos);
-    Ok(program)
+    match program {
+        Ok(mut program) => {
+            program.rev_location(0, &lines_pos);
+            Ok(program)
+        }
+        Err(e) => {
+            Err(get_error_location(&e))
+        }
+    }
 }
 
 #[cfg(test)]
