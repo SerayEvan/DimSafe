@@ -25,7 +25,6 @@ pub enum LiteralValue {
 
 impl AstNode for LiteralValue {
     type Output = Value;
-    fn rev_location(&mut self, _block: usize, _lines_index: &[usize]) {}
     fn evaluate(&self, _scope: &mut Scope, errors: &mut ErrorCollector, _output: &mut OutputCollector) -> Value {
         match self {
             LiteralValue::Integer(integer)  => Value::Scalar(Scalar{ value: *integer as f64, unit: NO_DIMENSION }),

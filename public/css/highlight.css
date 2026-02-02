@@ -23,3 +23,7 @@
 .structural {
     color: #fff;
 }
+.invalid_character {
+    color: #ff0000;
+    font: bold;
+}

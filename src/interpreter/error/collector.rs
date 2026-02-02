@@ -18,7 +18,7 @@ impl ErrorCollector {
         self.errors.push(error);
     }
 
-    pub fn set_loc_range(&mut self, loc_range: &RangeReverseLocation) {
+    pub fn set_loc_range(&mut self, loc_range: &RangeIndex) {
         for error in self.errors.iter_mut() {
             error.set_loc_range(loc_range);
         }

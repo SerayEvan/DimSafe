@@ -6,7 +6,6 @@ use lalrpop_util::ParseError;
 
 use super::ast::expression::*;
 use super::ast::location::*;
-use super::ast::ast_node::*;
 use super::lexer::*;
 
 use super::grammar::*;
@@ -21,32 +20,32 @@ fn get_lines_pos(input: &str) -> Vec<usize> {
     lines_index
 }
 
-fn get_error_location(error: &ParseError<usize, Token, (usize, LexicalError, usize)>) -> ErrorLocation {
+fn get_error_location(error: &ParseError<usize, Token, (usize, LexicalError, usize)>) -> ParseErrorLocation {
     match error {
         ParseError::InvalidToken { location, .. } => {
-            ErrorLocation { loc_range: RangeIndex::new(*location, *location) }
+            ParseErrorLocation { loc_range: RangeIndex::new(*location, *location) }
         }
         ParseError::UnrecognizedEof { location, .. } => {
-            ErrorLocation { loc_range: RangeIndex::new(*location, *location) }
+            ParseErrorLocation { loc_range: RangeIndex::new(*location, *location) }
         }
-        ParseError::UnrecognizedToken { token, expected } => {
-            ErrorLocation { loc_range: RangeIndex::new(token.0, token.2) }
+        ParseError::UnrecognizedToken { token, .. } => {
+            ParseErrorLocation { loc_range: RangeIndex::new(token.0, token.2) }
         }
         ParseError::ExtraToken { token } => {
-            ErrorLocation { loc_range: RangeIndex::new(token.0, token.2) }
+            ParseErrorLocation { loc_range: RangeIndex::new(token.0, token.2) }
         }
         ParseError::User  { error } => {
-            ErrorLocation { loc_range: RangeIndex::new(error.0, error.2) }
+            ParseErrorLocation { loc_range: RangeIndex::new(error.0, error.2) }
         }
     }
 }
 
 #[derive(Debug)]
-pub struct ErrorLocation {
+pub struct ParseErrorLocation {
     pub loc_range: RangeIndex,
 }
 
-pub fn parse_program(input: &str) -> Result<Vec<Spanned<Expression>>, ErrorLocation> {
+pub fn parse_program(input: &str) -> Result<Vec<Spanned<Expression>>, ParseErrorLocation> {
 
     info!("Parsing program: {}", input);
 
@@ -67,8 +66,7 @@ pub fn parse_program(input: &str) -> Result<Vec<Spanned<Expression>>, ErrorLocat
 
     // reverse location
     match program {
-        Ok(mut program) => {
-            program.rev_location(0, &lines_pos);
+        Ok(program) => {
             Ok(program)
         }
         Err(e) => {
@@ -81,8 +79,9 @@ pub fn parse_program(input: &str) -> Result<Vec<Spanned<Expression>>, ErrorLocat
 mod tests {
     use super::*;
 
-    use crate::interpreter::operator::*;
-    use crate::interpreter::ast::literal_value::*;
+    use super::super::ast::ast_node::*;
+    use super::super::operator::*;
+    use super::super::ast::literal_value::*;
 
     #[test]
     fn test_get_lines_pos() {

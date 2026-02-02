@@ -18,8 +18,13 @@ use super::ghost::*;
 fn stylize_text_with_lexer(text: &str, stylization: &mut Stylization) {
     let lexer = Lexer::new(text);
     for token in lexer {
-        if let Ok((start, token, end)) = token {
-            stylization.insert_balise(get_balise(&token), (start, end));
+        match token {
+            Ok((start, token, end)) => {
+                stylization.insert_balise(get_balise(&token), (start, end));
+            }
+            Err((start, _, end)) => {
+                stylization.insert_balise(INVALID_CHARACTER_BALISE, (start, end));
+            }
         }
     }
 }

@@ -43,36 +43,6 @@ pub enum Expression {
 
 impl AstNode for Expression {
     type Output = Value;
-
-    fn rev_location(&mut self, block: usize, lines_index: &[usize]) {
-        match self {
-
-            // Leaf
-            Expression::Literal(value) => value.rev_location(block, lines_index),
-            Expression::Identifier(identifier) => identifier.rev_location(block, lines_index),
-
-            // Non-leaf
-            Expression::Operation { op, args } => {
-                op.rev_location(block, lines_index);
-                args.rev_location(block, lines_index);
-            }
-            Expression::Array { arr } => {
-                arr.rev_location(block, lines_index);
-            }
-            Expression::Assignment { op, ident, value } => {
-                op.rev_location(block, lines_index);
-                ident.rev_location(block, lines_index);
-                value.rev_location(block, lines_index);
-            }
-            Expression::Shown { expr, op, divider } => {
-                expr.rev_location(block, lines_index);
-                op.rev_location(block, lines_index);
-                if let Some(divider) = divider {
-                    divider.rev_location(block, lines_index);
-                }
-            }
-        }
-    }
     
     fn evaluate(&self, scope: &mut Scope, errors: &mut ErrorCollector, output: &mut OutputCollector) -> Value {
         match self {

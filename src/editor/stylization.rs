@@ -22,7 +22,7 @@ use crate::interpreter::lexer::*;
 
 type Balise = usize;
 
-pub static BALISE_LIST: [&'static str; 9] = [
+pub static BALISE_LIST: [&'static str; 10] = [
     "cursor_begin",
     "cursor_end",
     "literal_numerical",
@@ -32,6 +32,7 @@ pub static BALISE_LIST: [&'static str; 9] = [
     "identifier",
     "operator",
     "structural",
+    "invalid_character",
 ];
 
 // balise use when we don't want to have a balise
@@ -45,6 +46,7 @@ pub const LITERAL_UNIT_BALISE: Balise = 1 << 5;
 pub const IDENTIFIER_BALISE: Balise = 1 << 6;
 pub const OPERATOR_BALISE: Balise = 1 << 7;
 pub const STRUCTURAL_BALISE: Balise = 1 << 8;
+pub const INVALID_CHARACTER_BALISE: Balise = 1 << 9;
 
 fn get_balise_class(balise: Balise) -> String {
     let mut class = String::new();

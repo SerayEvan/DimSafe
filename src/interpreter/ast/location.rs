@@ -107,21 +107,19 @@ impl Display for RangeReverseLocation {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Spanned<U: AstNode> {
     pub loc_range: RangeIndex,
-    pub rev_loc_range: Option<RangeReverseLocation>,
     pub value: U,
 }
 
 impl<U: AstNode> Spanned<U> {
 
     pub fn new(loc: RangeIndex, value: U) -> Self {
-        Self { loc_range: loc, rev_loc_range: None, value }
+        Self { loc_range: loc, value }
     }
 
     pub fn map<V: AstNode, F>(self, f: F) -> Spanned<V>
     where F: FnOnce(U) -> V {
         Spanned {
             loc_range: self.loc_range,
-            rev_loc_range: self.rev_loc_range,
             value: f(self.value),
         }
     }
@@ -131,20 +129,9 @@ impl<U: AstNode> AstNode for Spanned<U> {
 
     type Output = U::Output;
 
-    fn rev_location(&mut self, block: usize, lines_index: &[usize]) {
-        
-        // reverse this own location
-        self.rev_loc_range = Some(self.loc_range.rev_pos(block, lines_index));
-
-        // reverse the value's location
-        self.value.rev_location(block, lines_index);
-    }
-
     fn evaluate(&self, scope: &mut Scope, errors: &mut ErrorCollector, output: &mut OutputCollector) -> U::Output {
         let result = self.value.evaluate(scope, errors, output);
-        if let Some(rev_loc_range) = self.rev_loc_range.clone() {
-            errors.set_loc_range(&rev_loc_range);
-        }
+        errors.set_loc_range(&self.loc_range);
         result
     }
 

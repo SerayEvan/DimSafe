@@ -12,26 +12,26 @@ pub trait ErrorMessage {
     fn name(&self) -> &'static str;
     fn description(&self) -> String;
 
-    fn get_message(&self, loc_range: Option<RangeReverseLocation>) -> String {
+    fn get_message(&self, loc_range: Option<RangeIndex>) -> String {
         match loc_range {
-            Some(loc_range) => format!("{}: {}\nLocation: {}", self.name(), self.description(), loc_range),
+            Some(loc_range) => format!("{}: {}", self.name(), self.description()),
             None => format!("{}: {}", self.name(), self.description()),
         }
     }
 }
 
 trait ErrorType {
-    fn get_message(&self, loc_range: Option<RangeReverseLocation>) -> String;
+    fn get_message(&self, loc_range: Option<RangeIndex>) -> String;
 }
 
 impl<T: ErrorMessage> ErrorType for T {
-    fn get_message(&self, loc_range: Option<RangeReverseLocation>) -> String {
+    fn get_message(&self, loc_range: Option<RangeIndex>) -> String {
         self.get_message(loc_range)
     }
 }
 
 pub struct Error {
-    loc_range: Option<RangeReverseLocation>,
+    loc_range: Option<RangeIndex>,
     error_type: Box<dyn ErrorType>,
 }
 
@@ -42,7 +42,7 @@ impl Error {
     pub fn get_message(&self) -> String {
         self.error_type.get_message(self.loc_range.clone())
     }
-    pub fn set_loc_range(&mut self, loc_range: &RangeReverseLocation) {
+    pub fn set_loc_range(&mut self, loc_range: &RangeIndex) {
         if self.loc_range.is_none() {
             self.loc_range = Some(loc_range.clone());
         }

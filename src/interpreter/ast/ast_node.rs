@@ -10,7 +10,6 @@ use super::super::scope::output::*;
 
 pub trait AstNode {
     type Output: Clone;
-    fn rev_location(&mut self, block: usize, lines_index: &[usize]);
     fn evaluate(&self, scope: &mut Scope, errors: &mut ErrorCollector, output: &mut OutputCollector) -> Self::Output;
 
     #[cfg(test)]
@@ -19,11 +18,6 @@ pub trait AstNode {
 
 impl<U: AstNode> AstNode for Vec<U> {
     type Output = Vec<U::Output>;
-    fn rev_location(&mut self, block: usize, lines_index: &[usize]) {
-        for item in self {
-            item.rev_location(block, lines_index);
-        }
-    }
     fn evaluate(&self, scope: &mut Scope, errors: &mut ErrorCollector, output: &mut OutputCollector) -> Vec<U::Output> {
         let mut result = Vec::new();
         for item in self {
@@ -48,12 +42,6 @@ impl<U: AstNode> AstNode for Vec<U> {
 impl<U: AstNode> AstNode for Option<U> {
     type Output = Option<U::Output>;
     
-    fn rev_location(&mut self, block: usize, lines_index: &[usize]) {
-        if let Some(value) = self {
-            value.rev_location(block, lines_index);
-        }
-    }
-    
     fn evaluate(&self, scope: &mut Scope, errors: &mut ErrorCollector, output: &mut OutputCollector) -> Option<U::Output> {
         match self {
             Some(value) => Some(value.evaluate(scope, errors, output)),
@@ -74,11 +62,6 @@ impl<U: AstNode> AstNode for Option<U> {
 
 impl<U: AstNode, V: AstNode> AstNode for (U, V) {
     type Output = (U::Output, V::Output);
-    
-    fn rev_location(&mut self, block: usize, lines_index: &[usize]) {
-        self.0.rev_location(block, lines_index);
-        self.1.rev_location(block, lines_index);
-    }
     
     fn evaluate(&self, scope: &mut Scope, errors: &mut ErrorCollector, output: &mut OutputCollector) -> (U::Output, V::Output) {
         (self.0.evaluate(scope, errors, output), self.1.evaluate(scope, errors, output))
@@ -107,8 +90,6 @@ impl<T: Clone + PartialEq + Debug> From<T> for Leaf<T> {
 impl<T: Clone + PartialEq + Debug> AstNode for Leaf<T> {
     type Output = T;
     
-    fn rev_location(&mut self, _block: usize, _lines_index: &[usize]) {}
-    
     fn evaluate(&self, _scope: &mut Scope, _errors: &mut ErrorCollector, _output: &mut OutputCollector) -> T {
         self.value.clone()
     }
@@ -131,10 +112,6 @@ impl<T: Clone + PartialEq + Debug> Deref for Leaf<T> {
 
 impl AstNode for () {
     type Output = ();
-
-    fn rev_location(&mut self, _block: usize, _lines_index: &[usize]) {
-        ()
-    }
 
     fn evaluate(&self, _scope: &mut Scope, _errors: &mut ErrorCollector, _output: &mut OutputCollector) -> () {
         ()
