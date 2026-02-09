@@ -1,5 +1,6 @@
 use super::*;
 
+#[derive(Clone)]
 pub struct ErrorCollector {
     errors: Vec<Error>,
 }
@@ -10,7 +11,7 @@ impl ErrorCollector {
         Self { errors: Vec::new() }
     }
 
-    pub fn raise<M: ErrorMessage + 'static>(&mut self, error: M) {
+    pub fn raise<M: ErrorMessage + Send + Sync + 'static>(&mut self, error: M) {
         self.errors.push(Error::new(error));
     }
 

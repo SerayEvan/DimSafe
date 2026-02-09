@@ -9,5 +9,6 @@ pub mod error;
 pub mod operator;
 pub mod value;
 pub mod unit;
+pub mod execute;
 
 mod grammar;

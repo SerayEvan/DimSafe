@@ -3,6 +3,7 @@
 
 use wasm_bindgen::JsCast;
 use web_sys::{Element, Node, HtmlDivElement, HtmlElement};
+use leptos::*;
 use leptos::prelude::*;
 
 use crate::interpreter::scope::output::*;
@@ -97,17 +98,16 @@ impl GhostReversePlacement {
 }
 
 #[component]
-pub fn GhostOverlayComponent(
+fn GhostOverlayComponent(
     #[prop(into)] index: usize,
     children: Children,
-    #[prop(into)] is_executed: bool,
 ) -> impl IntoView {
     // ghost overlay as goal to display element without insert text or modify text user input
     // make a component in absolutely positionned at the position of the ghost overlay dynamically and set width and height of the span in the text	
     
     view! {
         <div 
-            class=format!("output_overlay output_overlay_{} {}", index, if is_executed { "" } else { "output_overlay_exceeded" })
+            class=format!("output_overlay output_overlay_{}", index)
             style:position="absolute" 
             style:left="0px"
             style:top="0px"
@@ -118,27 +118,25 @@ pub fn GhostOverlayComponent(
 }
 
 #[component]
-pub fn TextGhostOverlay(
+fn TextGhostOverlay(
     #[prop(into)] output: Output,
-    #[prop(into)] is_executed: bool,
 ) -> impl IntoView {
     view! {
-        <GhostOverlayComponent index=output.index is_executed=is_executed>
+        <GhostOverlayComponent index=output.index>
             {output.text}
         </GhostOverlayComponent>
     }
 }
 
-pub fn render_output_overlays(
+fn render_output_overlays(
     output: &OutputCollector,
-    is_executed: bool,
 ) -> impl IntoView {
     let mut view_collection = Vec::new();
 
     for output in &output.outputs {
         view_collection.push(view! {
             <div>
-                <TextGhostOverlay output=output.clone() is_executed=is_executed />
+                <TextGhostOverlay output=output.clone() />
             </div>
         });
     }
@@ -146,33 +144,35 @@ pub fn render_output_overlays(
     view_collection
 }
 
-pub fn display_output_overlays(
-    output: OutputCollector,
-    output_overlays_node: HtmlDivElement,
-    input_node: HtmlDivElement,
-    is_executed: bool,
+pub fn insert_output_overlays(
+    output: &OutputCollector,
+    output_overlays_node: &HtmlDivElement,
 ) {
+    output_overlays_node.set_inner_html(&render_output_overlays(&output).to_html());
+}
 
-    // display output overlays
-    output_overlays_node.set_inner_html(&render_output_overlays(&output, is_executed).to_html());
-
+pub fn update_location_output_overlays(
+    output_overlays_node: &HtmlDivElement,
+    input_node: &HtmlDivElement,
+) {
     let mut elements = Vec::new();
+
+    let mut i = 0;
+
+    let overlays = output_overlays_node.get_elements_by_class_name("output_overlay");
     
-    for output in output.outputs {
-        let index = output.index;
+    while let Some(overlay_element) = overlays.item(i) {
+
+        let index = overlay_element.class_name().split("output_overlay_").last().expect("Cannot get index").parse::<usize>().expect("Cannot parse index");
 
         // find span element
         let span_element = input_node
             .get_elements_by_class_name(format!("ghost_overlay_{}", index).as_str())
             .item(0);
 
-        let overlay_element = output_overlays_node
-            .get_elements_by_class_name(format!("output_overlay_{}", index).as_str())
-            .item(0);
-
         // verify if span and overlay element are found and continue if not
-        match (span_element, overlay_element) {
-            (Some(span_element), Some(overlay_element)) => {
+        match span_element {
+            Some(span_element) => {
 
                 // convert span and overlay element to HtmlElement
                 let span_element = span_element.dyn_into::<HtmlElement>().expect("Cannot convert to HtmlElement");
@@ -185,6 +185,8 @@ pub fn display_output_overlays(
                 continue;
             }
         }
+
+        i += 1;
     }
 
     // first loop to set width of span element

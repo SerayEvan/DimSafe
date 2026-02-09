@@ -21,7 +21,7 @@
     vertical-align: bottom;
 }
 
-.output_overlay_exceeded {
+.unexecuted .output_overlay {
     border-color: #6b7f5f;
     background-color: #31352f;
     color: #e4e4e4;

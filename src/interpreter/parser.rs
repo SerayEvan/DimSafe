@@ -20,32 +20,38 @@ fn get_lines_pos(input: &str) -> Vec<usize> {
     lines_index
 }
 
-fn get_error_location(error: &ParseError<usize, Token, (usize, LexicalError, usize)>) -> ParseErrorLocation {
+fn get_error_location(error: &ParseError<usize, Token, (usize, LexicalError, usize)>) -> RangeIndex {
     match error {
         ParseError::InvalidToken { location, .. } => {
-            ParseErrorLocation { loc_range: RangeIndex::new(*location, *location) }
+            RangeIndex::new(*location, *location)
         }
         ParseError::UnrecognizedEof { location, .. } => {
-            ParseErrorLocation { loc_range: RangeIndex::new(*location, *location) }
+            RangeIndex::new(*location, *location)
         }
         ParseError::UnrecognizedToken { token, .. } => {
-            ParseErrorLocation { loc_range: RangeIndex::new(token.0, token.2) }
+            RangeIndex::new(token.0, token.2)
         }
         ParseError::ExtraToken { token } => {
-            ParseErrorLocation { loc_range: RangeIndex::new(token.0, token.2) }
+            RangeIndex::new(token.0, token.2)
         }
         ParseError::User  { error } => {
-            ParseErrorLocation { loc_range: RangeIndex::new(error.0, error.2) }
+            RangeIndex::new(error.0, error.2)
         }
     }
 }
 
-#[derive(Debug)]
-pub struct ParseErrorLocation {
-    pub loc_range: RangeIndex,
+#[derive(Debug, Clone)]
+pub struct InvalidTokenError {
+    pub loc_range: Vec<RangeIndex>,
 }
 
-pub fn parse_program(input: &str) -> Result<Vec<Spanned<Expression>>, ParseErrorLocation> {
+impl InvalidTokenError {
+    pub fn new() -> Self {
+        Self { loc_range: vec![] }
+    }
+}
+
+pub fn parse_program(input: &str) -> Result<Vec<Spanned<Expression>>, InvalidTokenError> {
 
     info!("Parsing program: {}", input);
 
@@ -57,6 +63,19 @@ pub fn parse_program(input: &str) -> Result<Vec<Spanned<Expression>>, ParseError
     // lexer
     let lexer = Lexer::new(input);
     let tokens = lexer.collect::<Vec<_>>();
+
+    // verify all tokens are valid
+    let invalid_tokens = tokens.iter()
+        .filter_map(|tok| {
+            match tok {
+                Ok(_) => None,
+                Err((start, _, end)) => Some(RangeIndex::new(*start, *end)),
+            }
+        }).collect::<Vec<RangeIndex>>();
+
+    if !invalid_tokens.is_empty() {
+        return Err(InvalidTokenError { loc_range: invalid_tokens });
+    }
 
     // show tokens
     info!("{:?}", tokens);
@@ -70,7 +89,7 @@ pub fn parse_program(input: &str) -> Result<Vec<Spanned<Expression>>, ParseError
             Ok(program)
         }
         Err(e) => {
-            Err(get_error_location(&e))
+            Err(InvalidTokenError { loc_range: vec![get_error_location(&e)] })
         }
     }
 }

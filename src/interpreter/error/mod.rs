@@ -6,6 +6,7 @@ pub mod collector;
 use super::ast::location::*;
 use super::scope::*;
 use super::unit::dimension::*;
+use std::sync::Arc;
 
 pub trait ErrorMessage {
     fn raise<T>(self) -> Result<T, Error>;
@@ -20,24 +21,25 @@ pub trait ErrorMessage {
     }
 }
 
-trait ErrorType {
+trait ErrorType: Send + Sync {
     fn get_message(&self, loc_range: Option<RangeIndex>) -> String;
 }
 
-impl<T: ErrorMessage> ErrorType for T {
+impl<T: ErrorMessage + Send + Sync> ErrorType for T {
     fn get_message(&self, loc_range: Option<RangeIndex>) -> String {
         self.get_message(loc_range)
     }
 }
 
+#[derive(Clone)]
 pub struct Error {
     loc_range: Option<RangeIndex>,
-    error_type: Box<dyn ErrorType>,
+    error_type: Arc<dyn ErrorType + Send + Sync>,
 }
 
 impl Error {
-    pub fn new<M: 'static + ErrorMessage>(error_type: M) -> Self {
-        Self { loc_range: None, error_type: Box::new(error_type) }
+    pub fn new<M: 'static + ErrorMessage + Send + Sync>(error_type: M) -> Self {
+        Self { loc_range: None, error_type: Arc::new(error_type) }
     }
     pub fn get_message(&self) -> String {
         self.error_type.get_message(self.loc_range.clone())
@@ -49,6 +51,7 @@ impl Error {
     }
 }
 
+#[derive(Clone)]
 pub struct UnsupportedError {
     pub functionality: &'static str,
 }
@@ -65,6 +68,7 @@ impl ErrorMessage for UnsupportedError {
     }
 }
 
+#[derive(Clone)]
 pub struct AssignmentError {
     pub variable_name: String,
     pub assignment_operator: AssignmentOperator,
@@ -86,6 +90,7 @@ impl ErrorMessage for AssignmentError {
     }
 }
 
+#[derive(Clone)]
 pub struct UndefinedError {
     pub variable_name: String,
 }
@@ -102,6 +107,7 @@ impl ErrorMessage for UndefinedError {
     }
 }
 
+#[derive(Clone)]
 pub struct UnfoundUnitError {
     pub unit_name: String,
 }
@@ -118,6 +124,7 @@ impl ErrorMessage for UnfoundUnitError {
     }
 }
 
+#[derive(Clone)]
 pub struct DimensionMismatchError {
     pub unit_a: UnitDimension,
     pub unit_b: UnitDimension,
@@ -135,6 +142,7 @@ impl ErrorMessage for DimensionMismatchError {
     }
 }
 
+#[derive(Clone)]
 pub struct InvalidInputError {
     pub message: String,
 }

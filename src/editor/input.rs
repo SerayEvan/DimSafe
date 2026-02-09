@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2025 Evan SERAY
 
+use leptos::*;
 use leptos::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::HtmlElement;
 use leptos::html;
 use leptos::html::Div;
 use leptos_use::use_element_bounding;
+use log::info;
 
 use crate::interpreter::lexer::*;
-use crate::interpreter::scope::output::*;
+use crate::interpreter::execute::*;
 
 use super::cursor::*;
 use super::stylization::*;
@@ -47,30 +49,31 @@ struct InputWrapper {
     pub input_node_ref: NodeRef<Div>,
     pub output_overlays_node_ref: NodeRef<Div>,
     pub line_indicator_node_ref: NodeRef<Div>,
-    pub is_executed: RwSignal<bool>,
     pub input_text: RwSignal<String>,
-    pub output_signal: RwSignal<OutputCollector>,
+    pub execute_result_signal: RwSignal<ProgramResult>,
 }
 
 impl InputWrapper {
 
     pub fn piplining_effect(self) {
 
-        let elt_bounding_signal = use_element_bounding(self.input_node_ref);
-
-        // effect to repaint output overlays when input area is resized and location of output overlays is changed
         Effect::new(move |_| {
-            let _ = elt_bounding_signal.width.get();
-            let _ = elt_bounding_signal.height.get();
-            let _ = elt_bounding_signal.left.get();
-            let _ = elt_bounding_signal.top.get();
 
-            display_output_overlays(
-                self.output_signal.get_untracked(), 
-                self.output_overlays_node_ref.get_untracked().expect("Node ref is not a div or not found"), 
-                self.input_node_ref.get_untracked().expect("Node ref is not a div or not found"), 
-                self.is_executed.get_untracked()
-            );
+
+            let elt_bounding_signal = use_element_bounding(self.input_node_ref.get().expect("Node ref is not a div or not found"));
+
+            // effect to repaint output overlays when input area is resized and location of output overlays is changed
+            Effect::new(move |_| {
+                let _ = elt_bounding_signal.width.get();
+                let _ = elt_bounding_signal.height.get();
+                let _ = elt_bounding_signal.left.get();
+                let _ = elt_bounding_signal.top.get();
+
+                update_location_output_overlays(
+                    &self.output_overlays_node_ref.get_untracked().expect("Node ref is not a div or not found"), 
+                    &self.input_node_ref.get_untracked().expect("Node ref is not a div or not found")
+                );
+            });
         });
 
         // effect to piplining when input text is changed
@@ -81,9 +84,13 @@ impl InputWrapper {
 
     pub fn piplining(&self) {
 
-        // retrieve cursor state and text
+        info!("piplining");
+
+        // trigger piplining when input text is changed or execute result is changed
         let new_text = self.input_text.get();
-        let output = self.output_signal.get();
+        let execute_result = self.execute_result_signal.get();
+
+        // retrieve nodes
         let node = self.input_node_ref.get_untracked().expect("Node ref is not a div or not found");
         let output_overlays_node = self.output_overlays_node_ref.get_untracked().expect("Node ref is not a div or not found");
 
@@ -114,8 +121,33 @@ impl InputWrapper {
         stylize_text_with_lexer(&current_text, &mut stylization);
 
         // apply ghost placement from output if executed. Otherwise, keep the previous ghost placement.
-        if self.is_executed.get_untracked() {
-            ghost_placement = GhostReversePlacement::from_output(&output)
+        match execute_result {
+            ProgramResult::Ok{ output, .. } => {
+                ghost_placement = GhostReversePlacement::from_output(&output);
+                insert_output_overlays(&output, &output_overlays_node);
+
+                // remove unexecuted class and add executed class to output_overlays_node
+                let _ = output_overlays_node
+                    .class_list()
+                    .remove_1("unexecuted");
+
+                let _ = output_overlays_node
+                    .class_list()
+                    .add_1("executed");
+            }
+            ProgramResult::InvalidTokens(e) => {
+                ghost_placement = GhostReversePlacement::void();
+            }
+            ProgramResult::Unexecuted => {
+                // add unexecuted class to output_overlays_node and remove executed class
+                let _ = output_overlays_node
+                    .class_list()
+                    .add_1("unexecuted");
+
+                let _ = output_overlays_node
+                    .class_list()
+                    .remove_1("executed");
+            }
         };
 
         // apply ghost placement to stylization
@@ -136,7 +168,7 @@ impl InputWrapper {
         CursorState::restore_cursor(window);
 
         // display output overlays
-        display_output_overlays(output, output_overlays_node, node, self.is_executed.get_untracked());
+        update_location_output_overlays(&output_overlays_node, &node);
 
         // set line indicator
         set_line_indicator(&self.line_indicator_node_ref, &current_text);
@@ -146,8 +178,7 @@ impl InputWrapper {
 #[component]
 pub fn CodeInput(
     #[prop(into)] input_text: RwSignal<String>,
-    #[prop(into)] output_signal: RwSignal<OutputCollector>,
-    #[prop(into)] is_executed: RwSignal<bool>,
+    #[prop(into)] execute_result_signal: RwSignal<ProgramResult>,
     #[prop(into)] on_change: Callback<String>,
     #[prop(into)] on_run: Callback<String>,
 ) -> impl IntoView {
@@ -160,21 +191,22 @@ pub fn CodeInput(
         input_node_ref,
         output_overlays_node_ref,
         line_indicator_node_ref,
-        is_executed,
         input_text,
-        output_signal,
+        execute_result_signal,
     };
     input_wrapper.piplining_effect();
 
-    let on_run_click = move |_| {
-        let text = input_text.get_untracked();
-        let text = CursorState::retrieve_cursor(&text).1;
-        on_run.run(text);
-    };
-
     view! {
         <div class="input_section">
-            <button on:click=on_run_click>"Run"</button>
+            <button 
+                on:click=move |_| {
+                    let text = input_text.get_untracked();
+                    let text = CursorState::retrieve_cursor(&text).1;
+                    on_run.run(text);
+                }
+            >
+                "Run"
+            </button>
             <div class="input_area">
                 <div 
                     node_ref=line_indicator_node_ref
@@ -190,11 +222,12 @@ pub fn CodeInput(
 
                         if let Some(target) = ev.target() {
                             if let Ok(element) = target.dyn_into::<HtmlElement>() {
-                                
-                                is_executed.set(false);
-        
-                                let text_content = element.text_content().unwrap_or_default();
-                                on_change.run(text_content);
+
+                                //batch(move || {
+                                    execute_result_signal.set(ProgramResult::Unexecuted);
+                                    let text_content = element.text_content().unwrap_or_default();
+                                    on_change.run(text_content);
+                                //});
                             }
                         }
                     }
@@ -203,7 +236,9 @@ pub fn CodeInput(
                         if ev.key() == "Enter" {
                             if let Some(target) = ev.target() {
                                 if let Ok(element) = target.dyn_into::<HtmlElement>() {
+
                                     ev.prevent_default(); // prevent <div> or <p>
+
                                     let selection = window().get_selection().expect("Cannot get selection").expect("No selection available");
                                     let range = selection.get_range_at(0).expect("Cannot get range");
                                 
