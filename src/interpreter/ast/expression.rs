@@ -77,7 +77,7 @@ impl AstNode for Expression {
                 let divider = divider.as_ref().map(|divider| divider.evaluate(scope, errors, output));
                 let divider = divider.unwrap_or(Value::Scalar(Scalar{value: 1.0, unit: NO_DIMENSION}));
                 let result = OPERATOR_TABLE.compute(&Operator::Shown, &[value.clone(), divider], errors);
-                output.add(op.loc_range.end.clone(), format!("{}", result));
+                output.add(op.loc_range.end.clone(), OutputMessage::Result(format!("{}", result)));
                 value
             }
         }
@@ -126,5 +126,32 @@ impl AstNode for Expression {
             }
             _ => vec![format!("{}   - Type mismatch: {:?} != {:?}", prefix, a, b)],
         }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct Instruction {
+    pub expr: Spanned<Expression>,
+}
+
+impl AstNode for Instruction {
+    type Output = ();
+
+    fn evaluate(&self, scope: &mut Scope, errors: &mut ErrorCollector, output: &mut OutputCollector) -> () {
+        self.expr.evaluate(scope, errors, output);
+        /* Add a output message for the errors and delete them */
+        for error in errors.get_errors().iter() {
+            output.add(
+                self.expr.loc_range.end.clone(), 
+                OutputMessage::Error(error.get_message())
+            );
+        }
+        errors.clear_errors();
+        ()
+    }
+
+    #[cfg(test)]
+    fn difference(prefix: &str, a: &Self, b: &Self) -> Vec<String> {
+        Spanned::difference(prefix, &a.expr, &b.expr)
     }
 }

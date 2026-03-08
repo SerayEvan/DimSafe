@@ -11,6 +11,14 @@ impl ErrorCollector {
         Self { errors: Vec::new() }
     }
 
+    pub fn get_errors(&self) -> &Vec<Error> {
+        &self.errors
+    }
+
+    pub fn clear_errors(&mut self) {
+        self.errors.clear();
+    }
+
     pub fn raise<M: ErrorMessage + Send + Sync + 'static>(&mut self, error: M) {
         self.errors.push(Error::new(error));
     }

@@ -161,10 +161,10 @@ Arguments: Vec<Spanned<Expression>> = {
   <mut args: (<Locate<Expression>> ",")*> <e:Locate<Expression>?> => {if let Some(e) = e {args.push(e);} args},
 };
 
-pub ProgramLine: Expression = {
-  <e: Expression> ";" => e,
+pub ProgramLine: Instruction = {
+  <e: Locate<Expression>> ";" => Instruction{expr: e},
 };
 
-pub Program: Vec<Spanned<Expression>> = {
-  <mut expr: (<Locate<ProgramLine>>)*> <e:Locate<Expression>?> => {if let Some(e) = e {expr.push(e);} expr},
+pub Program: Vec<Instruction> = {
+  <mut expr: (<ProgramLine>)*> <e:Locate<Expression>?> => {if let Some(e) = e {expr.push(Instruction{expr: e});} expr},
 };

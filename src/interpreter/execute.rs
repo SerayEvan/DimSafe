@@ -13,11 +13,7 @@ use super::parser::InvalidTokenError;
 pub enum ProgramResult {
     #[default]
     Unexecuted,
-    Ok{
-        errors: ErrorCollector,
-        output: OutputCollector,
-        result: Vec<Value>,
-    },
+    Executed(OutputCollector),
     InvalidTokens(InvalidTokenError),
 }
 
@@ -30,12 +26,8 @@ pub fn execute_program(
         Ok(program) => {
             let mut errors = ErrorCollector::new();
             let mut output = OutputCollector::new();
-            let result = program.evaluate(scope, &mut errors, &mut output);
-            ProgramResult::Ok{
-                errors: errors,
-                output: output,
-                result: result,
-            }
+            let _ = program.evaluate(scope, &mut errors, &mut output);
+            ProgramResult::Executed(output)
         }
         Err(e) => {
             ProgramResult::InvalidTokens(e)

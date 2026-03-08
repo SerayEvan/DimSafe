@@ -6,3 +6,4 @@ pub mod stylization;
 pub mod cursor;
 pub mod ghost;
 pub mod storage;
+pub mod input_pipeline;

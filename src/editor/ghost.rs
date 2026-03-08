@@ -121,10 +121,21 @@ fn GhostOverlayComponent(
 fn TextGhostOverlay(
     #[prop(into)] output: Output,
 ) -> impl IntoView {
-    view! {
-        <GhostOverlayComponent index=output.index>
-            {output.text}
-        </GhostOverlayComponent>
+    match output.message {
+        OutputMessage::Result(text) => view! {
+            <GhostOverlayComponent index=output.index>
+                <span class="output_message output_message_result">
+                    {text}
+                </span>
+            </GhostOverlayComponent>
+        }.into_any(),
+        OutputMessage::Error(text) => view! {
+            <GhostOverlayComponent index=output.index>
+                <span class="output_message output_message_error">
+                    {text}
+                </span>
+            </GhostOverlayComponent>
+        }.into_any(),
     }
 }
 

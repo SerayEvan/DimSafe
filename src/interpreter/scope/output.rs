@@ -4,15 +4,21 @@
 use super::super::ast::location::*;
 
 #[derive(Clone)]
+pub enum OutputMessage {
+    Result(String),
+    Error(String),
+}
+
+#[derive(Clone)]
 pub struct Output {
     pub initial_location: LocationIndex, // location in text when the interpreter interpreted the text
     pub index: usize, // index used to place the ghost overlay even if the text is modified
-    pub text: String, 
+    pub message: OutputMessage,
 }
 
 impl Output {
-    pub fn new(location: LocationIndex, text: String, index: usize) -> Self {
-        Self { initial_location: location, index, text }
+    pub fn new(location: LocationIndex, message: OutputMessage, index: usize) -> Self {
+        Self { initial_location: location, index, message }
     }
 }
 
@@ -27,8 +33,8 @@ impl OutputCollector {
         Self { outputs: Vec::new(), nb_ghost_overlay: 0 }
     }
 
-    pub fn add(&mut self, location: LocationIndex, text: String) {
-        self.outputs.push(Output::new(location, text, self.nb_ghost_overlay));
+    pub fn add(&mut self, location: LocationIndex, message: OutputMessage) {
+        self.outputs.push(Output::new(location, message, self.nb_ghost_overlay));
         self.nb_ghost_overlay += 1;
     }
 }

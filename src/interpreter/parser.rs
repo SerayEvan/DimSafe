@@ -51,7 +51,7 @@ impl InvalidTokenError {
     }
 }
 
-pub fn parse_program(input: &str) -> Result<Vec<Spanned<Expression>>, InvalidTokenError> {
+pub fn parse_program(input: &str) -> Result<Vec<Instruction>, InvalidTokenError> {
 
     info!("Parsing program: {}", input);
 
@@ -117,7 +117,7 @@ mod tests {
         assert_eq!(program.len(), 1);
         
         let expected = 
-        Spanned::new(RangeIndex::new(0, 16), Expression::Operation{
+        Instruction{expr: Spanned::new(RangeIndex::new(0, 16), Expression::Operation{
                 op: Spanned::new(RangeIndex::new(10, 11), Leaf::from(Operator::ArithmeticMul)),
                 args: vec![
                     Spanned::new(RangeIndex::new(0, 10), Expression::Operation{
@@ -141,8 +141,8 @@ mod tests {
                         ],
                     }),
                 ],
-            });
-        let difference = Spanned::difference("", &program[0], &expected);
+            })};
+        let difference = Instruction::difference("", &program[0], &expected);
 
         for diff in &difference {
             println!("{}", diff);

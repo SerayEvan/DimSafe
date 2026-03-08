@@ -1,17 +1,5 @@
 /* SPDX-License-Identifier: Apache-2.0
    Copyright 2025 Evan SERAY */
-   
-.output_overlay {
-    border: 1px solid #2d601f;
-    background-color: #18331d;
-    border-radius: 5px;
-    padding: 1px;
-    padding-bottom: 0;
-    padding-top: 0;
-    margin: -1px;
-    margin-left: 0;
-    margin-right: 0;
-}
 
 .ghost_overlay {
     display: inline-block;
@@ -21,8 +9,37 @@
     vertical-align: bottom;
 }
 
-.unexecuted .output_overlay {
+.output_message {
+    border: 1px solid;
+    border-radius: 5px;
+    padding: 1px;
+    padding-bottom: 0;
+    padding-top: 0;
+    margin: -1px;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.executed .output_message_result {
+    border-color: #2d601f;
+    background-color: #18331d;
+    color: #e4e4e4;
+}
+
+.unexecuted .output_message {
     border-color: #6b7f5f;
     background-color: #31352f;
+    color: #e4e4e4;
+}
+
+.executed .output_message_error {
+    border-color: #b14f5f;
+    background-color: #491326;
+    color: #e4e4e4;
+}
+
+.unexecuted .output_message_error {
+    border-color: #774a4c;
+    background-color: #542733;
     color: #e4e4e4;
 }
