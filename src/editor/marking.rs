@@ -82,30 +82,46 @@ pub fn get_balise(token: &Token) -> usize {
 
 
 #[derive(Clone,Copy,Debug)]
-pub struct GhostOverlayIndex {
+pub struct OverlayIndex {
     pub index: usize,
 }
 
 #[derive(Clone,Default)]
 struct Marker {
     balise: Balise,
-    ghost_overlays: Vec<GhostOverlayIndex>,
+    overlays: Vec<OverlayIndex>,
 }
 
-pub struct Stylization {
+pub struct Marking {
     markers: BTreeMap<usize, Marker>, // (position, balise)
 }
 
-impl Stylization {
+impl Marking {
 
-    pub fn new() -> Stylization {
+    pub fn new() -> Marking {
 
         let mut markers = BTreeMap::new();
         markers.insert(0, Marker::default());
 
-        Stylization {
+        Marking {
             markers,
         }
+    }
+
+    pub fn from_lexer(text: &str) -> Marking {
+        let mut marking = Marking::new();
+        let lexer = Lexer::new(text);
+        for token in lexer {
+            match token {
+                Ok((start, token, end)) => {
+                    marking.insert_balise(get_balise(&token), (start, end));
+                }
+                Err((start, _, end)) => {
+                    marking.insert_balise(INVALID_CHARACTER_BALISE, (start, end));
+                }
+            }
+        }
+        marking
     }
 
     fn get_or_add_marker(&mut self, position: usize) -> &mut Marker {
@@ -125,7 +141,7 @@ impl Stylization {
         // create new marker
         let new_marker = Marker {
             balise: previous_marker_balise,
-            ghost_overlays: vec![],
+            overlays: vec![],
         };
 
         // add new marker
@@ -135,13 +151,13 @@ impl Stylization {
         self.markers.get_mut(&position).expect("")
     }
 
-    pub fn insert_ghost_overlay(&mut self, position: usize, ghost_overlay: GhostOverlayIndex) {
+    pub fn insert_overlay(&mut self, position: usize, overlay: OverlayIndex) {
 
         // get or add marker to insert ghost overlay
         let marker = self.get_or_add_marker(position);
 
         // add ghost overlay to marker
-        marker.ghost_overlays.push(ghost_overlay);
+        marker.overlays.push(overlay);
     }
 
     pub fn insert_balise(&mut self, new_balise: Balise, position: (usize, usize)) {
@@ -194,10 +210,10 @@ impl Stylization {
             }
 
             // add ghost overlay to new text
-            for ghost_overlay in marker.ghost_overlays.iter() {
+            for overlay in marker.overlays.iter() {
                 view_collection.push(view! {
                     <span 
-                        class=format!("ghost_overlay ghost_overlay_{}", ghost_overlay.index)
+                        class=format!("ghost_overlay ghost_overlay_{}", overlay.index)
                     ></span>
                 }.into_any());
             }
@@ -234,21 +250,21 @@ mod tests {
 
         let test_text = "1+2*32 ";
 
-        let mut stylization = Stylization::new();
+        let mut marking = Marking::new();
 
         // cursor
-        stylization.insert_balise(CURSOR_BEGIN, (2, 3));
-        stylization.insert_balise(CURSOR_END, (2, 3));
+        marking.insert_balise(CURSOR_BEGIN, (2, 3));
+        marking.insert_balise(CURSOR_END, (2, 3));
 
         // highlight text
-        stylization.insert_balise(LITERAL_NUMERICAL_BALISE, (0, 1));
-        stylization.insert_balise(OPERATOR_BALISE, (1, 2));
-        stylization.insert_balise(LITERAL_NUMERICAL_BALISE, (2, 3));
-        stylization.insert_balise(OPERATOR_BALISE, (3, 4));
-        stylization.insert_balise(LITERAL_NUMERICAL_BALISE, (4, 6));
+        marking.insert_balise(LITERAL_NUMERICAL_BALISE, (0, 1));
+        marking.insert_balise(OPERATOR_BALISE, (1, 2));
+        marking.insert_balise(LITERAL_NUMERICAL_BALISE, (2, 3));
+        marking.insert_balise(OPERATOR_BALISE, (3, 4));
+        marking.insert_balise(LITERAL_NUMERICAL_BALISE, (4, 6));
 
         // apply text style
-        let style_text = stylization.apply_to_text(&test_text).to_html();
+        let style_text = marking.apply_to_text(&test_text).to_html();
 
         // assert style text
         assert_eq!(style_text, "\
@@ -265,17 +281,17 @@ mod tests {
 
         let test_text = "Un peu de texte";
 
-        let mut stylization = Stylization::new();
+        let mut marking = Marking::new();
 
-        let ghost_overlay_0 = GhostOverlayIndex{index: 0};
-        let ghost_overlay_1 = GhostOverlayIndex{index: 1};
+        let overlay_0 = OverlayIndex{index: 0};   
+        let overlay_1 = OverlayIndex{index: 1};
 
         // ghost overlay
-        stylization.insert_ghost_overlay(4, ghost_overlay_0);
-        stylization.insert_ghost_overlay(4, ghost_overlay_1);
+        marking.insert_overlay(4, overlay_0);
+        marking.insert_overlay(4, overlay_1);
 
         // apply text style
-        let style_text = stylization.apply_to_text(&test_text).to_html();
+        let style_text = marking.apply_to_text(&test_text).to_html();
 
         // assert style text
         assert_eq!(style_text, "\

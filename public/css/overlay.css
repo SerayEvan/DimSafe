@@ -9,6 +9,10 @@
     vertical-align: bottom;
 }
 
+.output_overlay {
+    white-space: pre;
+}
+
 .output_message {
     border: 1px solid;
     border-radius: 5px;

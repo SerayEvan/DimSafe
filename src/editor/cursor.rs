@@ -17,7 +17,7 @@ use leptos::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::{Window, Element, Node};
 
-use super::stylization::*;
+use super::marking::*;
 
 pub const CURSOR_BEGIN_MARKER: char = '\u{e001}';
 pub const CURSOR_END_MARKER: char = '\u{e002}';
@@ -125,11 +125,11 @@ impl CursorState {
         (cursor_state, new_string)
     }
 
-    pub fn place_cursor_balise(&self, stylization: &mut Stylization) {
+    pub fn place_cursor_balise(&self, marking: &mut Marking) {
         for cursor in &self.cursor {
             let [cursor_begin, cursor_end] = *cursor;
-            stylization.insert_balise(CURSOR_BEGIN, (cursor_begin, cursor_begin + 1));
-            stylization.insert_balise(CURSOR_END, (cursor_end, cursor_end + 1));
+            marking.insert_balise(CURSOR_BEGIN, (cursor_begin, cursor_begin + 1));
+            marking.insert_balise(CURSOR_END, (cursor_end, cursor_end + 1));
         }
     }
 

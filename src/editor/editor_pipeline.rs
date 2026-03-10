@@ -1,49 +1,23 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2025 Evan SERAY
-//
 
 use leptos::*;
 use leptos::prelude::*;
 use leptos::html::Div;
 use leptos_use::use_element_bounding;
 use log::info;
+use wasm_bindgen::JsCast;
+use web_sys::HtmlElement;
 
-use crate::interpreter::lexer::*;
 use crate::interpreter::execute::*;
 
 use super::cursor::*;
-use super::stylization::*;
+use super::marking::*;
 use super::ghost::*;
+use super::line_indicator::*;
+use super::overlays_location::*;
 
-fn stylize_text_with_lexer(text: &str, stylization: &mut Stylization) {
-    let lexer = Lexer::new(text);
-    for token in lexer {
-        match token {
-            Ok((start, token, end)) => {
-                stylization.insert_balise(get_balise(&token), (start, end));
-            }
-            Err((start, _, end)) => {
-                stylization.insert_balise(INVALID_CHARACTER_BALISE, (start, end));
-            }
-        }
-    }
-}
-
-fn set_line_indicator(node: &NodeRef<Div>, text: &str) {
-    let lines = text.chars().filter(|c| *c == '\n').count() + 1;
-    let mut inner_view = Vec::new();
-    for line in 0..lines {
-        inner_view.push(view! {
-            <div>
-                {format!("{}", line + 1)}
-            </div>
-        });
-    }
-    let html_text = inner_view.into_iter().collect::<Vec<_>>().to_html();
-    node.get_untracked().expect("Node ref is not a div or not found").set_inner_html(&html_text);
-}
-
-pub struct InputPipeline {
+pub struct EditorPipeline {
     pub input_node_ref: NodeRef<Div>,
     pub output_overlays_node_ref: NodeRef<Div>,
     pub line_indicator_node_ref: NodeRef<Div>,
@@ -51,7 +25,7 @@ pub struct InputPipeline {
     pub execute_result_signal: RwSignal<ProgramResult>,
 }
 
-impl InputPipeline {
+impl EditorPipeline {
     pub fn piplining_effect(self) {
         Effect::new(move |_| {
             let elt_bounding_signal = use_element_bounding(
@@ -105,35 +79,32 @@ impl InputPipeline {
 
         // insert marker
         CursorState::insert_marker(&node);
-        GhostReversePlacement::insert_marker(&node);
+        OverlaysLocation::insert_marker(&node);
 
         // retrieve text
         let plain_text = node.text_content().unwrap_or_default();
 
         // get cursor state, ghost reverse placement and text
-        let (mut ghost_placement, plain_text) =
-            GhostReversePlacement::retrieve_ghost_overlay(&plain_text);
+        let (mut overlays_location, plain_text) =
+            OverlaysLocation::retrieve_overlays_location(&plain_text);
         let (mut cursor_state, cleaned_text) = CursorState::retrieve_cursor(&plain_text);
-
-        // initialize stylization
-        let mut stylization = Stylization::new();
 
         // verify if text need to be modified
         let current_text = if cleaned_text != new_text {
             cursor_state = CursorState::void();
-            ghost_placement = GhostReversePlacement::void();
+            overlays_location = OverlaysLocation::void();
             new_text.to_string()
         } else {
             cleaned_text
         };
 
         // apply lexer to text
-        stylize_text_with_lexer(&current_text, &mut stylization);
+        let mut marking = Marking::from_lexer(&current_text);
 
         // apply ghost placement from output if executed. Otherwise, keep the previous ghost placement.
         match execute_result {
             ProgramResult::Executed(output) => {
-                ghost_placement = GhostReversePlacement::from_output(&output);
+                overlays_location = OverlaysLocation::from_output(&output);
                 insert_output_overlays(&output, &output_overlays_node);
 
                 // remove unexecuted class and add executed class to output_overlays_node
@@ -142,7 +113,7 @@ impl InputPipeline {
                 let _ = output_overlays_node.class_list().add_1("executed");
             }
             ProgramResult::InvalidTokens(_e) => {
-                ghost_placement = GhostReversePlacement::void();
+                overlays_location = OverlaysLocation::void();
             }
             ProgramResult::Unexecuted => {
                 // add unexecuted class to output_overlays_node and remove executed class
@@ -153,13 +124,13 @@ impl InputPipeline {
         };
 
         // apply ghost placement to stylization
-        ghost_placement.restore_ghost_overlay(&mut stylization);
+        overlays_location.restore_overlays_location(&mut marking);
 
         // apply cursor state to stylization
-        cursor_state.place_cursor_balise(&mut stylization);
+        cursor_state.place_cursor_balise(&mut marking);
 
         // apply stylization to text
-        let modified_text = stylization.apply_to_text(&current_text);
+        let modified_text = marking.apply_to_text(&current_text);
 
         // set innerhtml of node_ref to modified_text
         let html_text = modified_text.to_html();
@@ -176,4 +147,35 @@ impl InputPipeline {
         set_line_indicator(&self.line_indicator_node_ref, &current_text);
     }
 }
+
+pub fn handle_enter_keydown(ev: web_sys::KeyboardEvent, on_change: Callback<String>) {
+    if ev.key() == "Enter" {
+        if let Some(target) = ev.target() {
+            if let Ok(element) = target.dyn_into::<HtmlElement>() {
+                ev.prevent_default(); // prevent <div> or <p>
+
+                let selection = window()
+                    .get_selection()
+                    .expect("Cannot get selection")
+                    .expect("No selection available");
+                let range = selection.get_range_at(0).expect("Cannot get range");
+
+                // Insert a text node containing a line break
+                let br = document().create_text_node("\n");
+                let _ = range.insert_node(&br);
+
+                // Move cursor after the \n
+                let _ = range.set_start_after(&br);
+                let _ = range.set_end_after(&br);
+                let _ = selection.remove_all_ranges();
+                let _ = selection.add_range(&range);
+
+                // call input event
+                let text_content = element.text_content().unwrap_or_default();
+                on_change.run(text_content);
+            }
+        }
+    }
+}
+
 

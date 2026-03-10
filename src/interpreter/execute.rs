@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2025 Evan SERAY
 
-use super::value::Value;
 use super::ast::ast_node::AstNode;
 use super::error::collector::*;
 use super::scope::*;

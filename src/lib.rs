@@ -9,9 +9,8 @@ use leptos::prelude::*;
 use console_error_panic_hook;
 use console_log;
 use log::Level;
-use log::info;
 
-use editor::input::*;
+use editor::editor::*;
 use editor::storage::*;
 use interpreter::execute::*;
 use interpreter::scope::*;
@@ -41,7 +40,7 @@ pub fn start() -> Result<(), JsValue> {
             <div>
                 <h1>"DimSafe"</h1>
             </div>
-            <CodeInput input_text=signal execute_result_signal=execute_result_signal on_change=on_change on_run=on_run />
+            <EditorSection input_text=signal execute_result_signal=execute_result_signal on_change=on_change on_run=on_run />
             <footer>
                 <p>
                     "© 2025 Evan SERAY | "
