@@ -44,7 +44,7 @@ pub fn start() -> Result<(), JsValue> {
             <footer>
                 <p>
                     "© 2025 Evan SERAY | "
-                    <a href="https://github.com" target="_blank" rel="noopener noreferrer">"GitHub"</a>
+                    <a href="https://github.com/SerayEvan/DimSafe" target="_blank" rel="noopener noreferrer">"GitHub"</a>
                 </p>
             </footer>
         }
