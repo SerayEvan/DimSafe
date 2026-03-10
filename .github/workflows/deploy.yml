@@ -35,7 +35,7 @@ jobs:
         run: cargo install trunk
 
       - name: Build site
-        run: trunk build --release
+        run: trunk build --release --public-url /DimSafe/
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

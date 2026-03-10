@@ -2,7 +2,7 @@
 target = "public/index.html"
 inject_scripts = true
 minify = "on_release"
-public_url = "/DimSafe/"
+public_url = "/"
 
 [serve]
 port = 8080
